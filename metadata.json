@@ -1,0 +1,5 @@
+{
+  "name": "Portfolio Website Builder",
+  "description": "A dynamic portfolio website builder with an intuitive inline admin panel for easy content management. Inspired by modern business websites, this tool allows users to edit homepage content, manage services, update sliders, and more, all without touching the code.",
+  "requestFramePermissions": []
+}

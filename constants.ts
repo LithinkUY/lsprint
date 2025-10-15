@@ -121,6 +121,7 @@ export const INITIAL_SITE_DATA: SiteData = {
           type: 'contact',
           content: {
             title: 'Contáctanos',
+            description: 'Escríbenos y te responderemos a la brevedad. También puedes contactarnos por teléfono o email.',
             recipientEmail: 'contacto@gbprint.com',
             fields: [
               { id: uuidv4(), label: 'Nombre', name: 'nombre', type: 'text', required: true },

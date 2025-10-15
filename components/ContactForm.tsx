@@ -46,6 +46,17 @@ const ContactForm: React.FC<ContactFormProps> = ({ section, contactInfo, editMod
           {section.title}
         </h2>
         <div className="w-24 h-1 bg-[var(--primary-color)] mx-auto mt-4"></div>
+        {typeof section.description === 'string' && (
+          <p
+            className="mt-4 text-gray-600 max-w-2xl mx-auto"
+            style={{ fontFamily: 'var(--body-font)' }}
+            contentEditable={!!editMode}
+            suppressContentEditableWarning
+            onBlur={(e) => onUpdateField?.('description', e.currentTarget.innerText)}
+          >
+            {section.description}
+          </p>
+        )}
       </div>
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
         {/* Columna del formulario */}

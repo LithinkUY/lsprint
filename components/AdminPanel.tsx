@@ -393,6 +393,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
         return (
           <div>
             <FormField id="c-t" label="Título" value={contactContent.title} onChange={e => updateField('title', e.target.value)} />
+            <FormField id="c-desc" label="Descripción (bajo el título)" as="textarea" value={contactContent.description || ''} onChange={e => updateField('description', e.target.value)} />
             <FormField id="c-recipient" label="Email de destino (recibe mensajes)" value={contactContent.recipientEmail || ''} onChange={e => updateField('recipientEmail', e.target.value)} />
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Ancho del formulario (desktop)</label>

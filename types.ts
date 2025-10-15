@@ -124,6 +124,8 @@ export interface ContactFormField {
 
 export interface ContactSection {
   title: string;
+  // Texto opcional que aparece arriba del formulario
+  description?: string;
   fields: ContactFormField[];
   submitText?: string;
   successMessage?: string;

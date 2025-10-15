@@ -4,6 +4,12 @@ import { Service } from '../types';
 interface ServicesProps {
     title: string;
     services: Service[];
+    titleFont?: string;
+    titleColor?: string;
+    textFont?: string;
+    textColor?: string;
+  editMode?: boolean;
+  onUpdateField?: (field: string, value: any) => void;
 }
 
 const WhatsappIcon = () => (
@@ -12,12 +18,18 @@ const WhatsappIcon = () => (
     </svg>
 )
 
-const Services: React.FC<ServicesProps> = ({ title, services }) => {
+const Services: React.FC<ServicesProps> = ({ title, services, titleFont, titleColor, textFont, textColor, editMode, onUpdateField }) => {
   return (
     <section id="services" className="py-20">
       <div className="container mx-auto px-6">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold" style={{fontFamily: 'var(--heading-font)'}}>{title}</h2>
+          <h2
+            className="text-4xl font-bold"
+            style={{fontFamily: titleFont || 'var(--heading-font)', color: titleColor || undefined}}
+            contentEditable={!!editMode}
+            suppressContentEditableWarning
+            onBlur={(e) => onUpdateField?.('title', e.currentTarget.innerText)}
+          >{title}</h2>
           <div className="w-24 h-1 bg-[var(--primary-color)] mx-auto mt-4"></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -27,8 +39,8 @@ const Services: React.FC<ServicesProps> = ({ title, services }) => {
                 <div className="bg-[var(--primary-color)] rounded-full p-4" dangerouslySetInnerHTML={{ __html: service.icon }}>
                 </div>
               </div>
-              <h3 className="text-2xl font-semibold mb-3" style={{fontFamily: 'var(--heading-font)'}}>{service.title}</h3>
-              <p className="text-gray-600">{service.description}</p>
+              <h3 className="text-2xl font-semibold mb-3" style={{fontFamily: textFont || 'var(--body-font)', color: textColor || undefined}}>{service.title}</h3>
+              <p className="text-gray-600" style={{fontFamily: textFont || 'var(--body-font)', color: textColor || undefined}}>{service.description}</p>
               {service.whatsappLink && (
                   <a href={service.whatsappLink} target="_blank" rel="noopener noreferrer" className="absolute top-4 right-4 bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                       <WhatsappIcon />

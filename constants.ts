@@ -22,6 +22,11 @@ export const INITIAL_SITE_DATA: SiteData = {
     backgroundColor: '#111827',
     textColor: '#d1d5db',
   },
+  whatsapp: {
+    phone: '',
+    message: '¡Hola! Quiero más información.',
+    enabled: true,
+  },
   pages: [
     {
       id: uuidv4(),
@@ -116,9 +121,15 @@ export const INITIAL_SITE_DATA: SiteData = {
           type: 'contact',
           content: {
             title: 'Contáctanos',
-            address: 'Av. Principal 123, Miraflores, Lima, Perú',
-            phone: '+51 987 654 321',
-            email: 'contacto@gbprint.com'
+            recipientEmail: 'contacto@gbprint.com',
+            fields: [
+              { id: uuidv4(), label: 'Nombre', name: 'nombre', type: 'text', required: true },
+              { id: uuidv4(), label: 'Email', name: 'email', type: 'email', required: true },
+              { id: uuidv4(), label: 'Mensaje', name: 'mensaje', type: 'textarea', required: true }
+            ],
+            submitText: 'Enviar',
+            successMessage: '¡Gracias por contactarnos! Te responderemos pronto.',
+            errorMessage: 'Hubo un error al enviar el mensaje. Intenta nuevamente.'
           }
         }
       ],

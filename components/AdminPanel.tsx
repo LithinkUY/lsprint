@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SiteData, Page, Section, SectionType, GlobalStyles, HeaderFooterStyles, SiteIdentity, HeroSection, ServicesSection, ProductsSection, AboutSection, MapSection, ContactSection, TextSection, ImageSection, HtmlSection, createNewSlide, createNewService, createNewProduct, createNewPage, createNewSectionOfType, HeroSlide, Service, Product, ImageItem } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import EstilosSection from './EstilosSection';
 
 // Props Interface
 interface AdminPanelProps {
@@ -69,8 +70,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
   useEffect(() => { setHasChanges(JSON.stringify(draftData) !== JSON.stringify(initialData)); }, [draftData, initialData]);
 
   const handleSave = () => {
-    setSiteData(draftData);
-    localStorage.setItem('siteData', JSON.stringify(draftData));
+    // Clonar y sanear número de WhatsApp
+    const dataToSave: SiteData = JSON.parse(JSON.stringify(draftData));
+    if (dataToSave.whatsapp) {
+      dataToSave.whatsapp.phone = (dataToSave.whatsapp.phone || '').replace(/[^0-9]/g, '');
+      if (typeof dataToSave.whatsapp.enabled !== 'boolean') dataToSave.whatsapp.enabled = true as any;
+      if (!dataToSave.whatsapp.message) dataToSave.whatsapp.message = '¡Hola! Quiero más información.' as any;
+    }
+    setSiteData(dataToSave);
+    // Persistir con la misma clave que usa App/DynamicStyle
+    try {
+      localStorage.setItem('dynamic-site-data', JSON.stringify(dataToSave));
+    } catch {}
   };
 
   const handleDiscard = () => setDraftData(JSON.parse(JSON.stringify(initialData)));
@@ -247,6 +258,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
         return (
           <div>
             <FormField id="services-title" label="Título de la Sección" value={servicesContent.title} onChange={e => updateField('title', e.target.value)} />
+            <div className="flex gap-2 mb-2">
+              <FormField id="services-title-font" label="Fuente Título" value={servicesContent.titleFont || ''} onChange={e => updateField('titleFont', e.target.value)} />
+              <FormField id="services-title-color" label="Color Título" value={servicesContent.titleColor || ''} onChange={e => updateField('titleColor', e.target.value)} />
+            </div>
+            <div className="flex gap-2 mb-2">
+              <FormField id="services-text-font" label="Fuente Texto" value={servicesContent.textFont || ''} onChange={e => updateField('textFont', e.target.value)} />
+              <FormField id="services-text-color" label="Color Texto" value={servicesContent.textColor || ''} onChange={e => updateField('textColor', e.target.value)} />
+            </div>
             {servicesContent.services.map((service, i) => (
               <CollapsibleCard key={service.id} title={service.title || 'Nuevo Servicio'} onDelete={() => updateList('services', servicesContent.services.filter(s => s.id !== service.id))}>
                 <FormField id={`s-t-${service.id}`} label="Título" value={service.title} onChange={createListItemChangeHandler<Service, 'title'>('services', i, 'title')} />
@@ -266,6 +285,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
         return (
           <div>
             <FormField id="products-title" label="Título de la Sección" value={productsContent.title} onChange={e => updateField('title', e.target.value)} />
+            <div className="flex gap-2 mb-2">
+              <FormField id="products-title-font" label="Fuente Título" value={productsContent.titleFont || ''} onChange={e => updateField('titleFont', e.target.value)} />
+              <FormField id="products-title-color" label="Color Título" value={productsContent.titleColor || ''} onChange={e => updateField('titleColor', e.target.value)} />
+            </div>
+            <div className="flex gap-2 mb-2">
+              <FormField id="products-text-font" label="Fuente Texto" value={productsContent.textFont || ''} onChange={e => updateField('textFont', e.target.value)} />
+              <FormField id="products-text-color" label="Color Texto" value={productsContent.textColor || ''} onChange={e => updateField('textColor', e.target.value)} />
+            </div>
             {productsContent.products.map((p, i) => (
               <CollapsibleCard key={p.id} title={p.name || 'Nuevo Producto'} onDelete={() => updateList('products', productsContent.products.filter(item => item.id !== p.id))}>
                 <FormField id={`p-n-${p.id}`} label="Nombre" value={p.name} onChange={createListItemChangeHandler<Product, 'name'>('products', i, 'name')} />
@@ -289,6 +316,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
                     <img src={p.imageUrl} alt="preview" className="mt-1 h-16 object-contain" />
                   )}
                 </div>
+                <FormField id={`p-icon-${p.id}`} label="Icono (SVG o imagen base64)" as="textarea" value={p.icon || ''} onChange={createListItemChangeHandler<Product, 'icon'>('products', i, 'icon')} />
+                <div className="mb-2">
+                  <input type="file" accept="image/*" onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      if (typeof reader.result === 'string') {
+                        const newProducts = [...productsContent.products];
+                        newProducts[i].icon = reader.result;
+                        updateList('products', newProducts);
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  }} />
+                  {p.icon && p.icon.startsWith('data:image') && (
+                    <img src={p.icon} alt="icon preview" className="mt-1 h-10 object-contain" />
+                  )}
+                </div>
                 <FormField id={`p-wa-${p.id}`} label="Enlace WhatsApp (Opcional)" value={p.whatsappLink || ''} onChange={createListItemChangeHandler<Product, 'whatsappLink'>('products', i, 'whatsappLink')} />
               </CollapsibleCard>
             ))}
@@ -298,13 +344,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
           </div>
         );
       }
-      case 'about':
+      case 'about': {
+        const aboutContent = content as AboutSection;
         return (
           <div>
-            <FormField id="ab-t" label="Título" value={(content as AboutSection).title} onChange={e => updateField('title', e.target.value)} />
-            <FormField id="ab-st" label="Subtítulo" value={(content as AboutSection).subtitle} onChange={e => updateField('subtitle', e.target.value)} />
-            <FormField id="ab-c" as="textarea" label="Contenido" value={(content as AboutSection).content} onChange={e => updateField('content', e.target.value)} />
-            <FormField id="ab-i" label="URL Imagen" value={(content as AboutSection).imageUrl} onChange={e => updateField('imageUrl', e.target.value)} />
+            <FormField id="ab-t" label="Título" value={aboutContent.title} onChange={e => updateField('title', e.target.value)} />
+            <div className="flex gap-2 mb-2">
+              <FormField id="about-title-font" label="Fuente Título" value={aboutContent.titleFont || ''} onChange={e => updateField('titleFont', e.target.value)} />
+              <FormField id="about-title-color" label="Color Título" value={aboutContent.titleColor || ''} onChange={e => updateField('titleColor', e.target.value)} />
+            </div>
+            <FormField id="ab-st" label="Subtítulo" value={aboutContent.subtitle} onChange={e => updateField('subtitle', e.target.value)} />
+            <FormField id="ab-c" as="textarea" label="Contenido" value={aboutContent.content} onChange={e => updateField('content', e.target.value)} />
+            <div className="flex gap-2 mb-2">
+              <FormField id="about-text-font" label="Fuente Texto" value={aboutContent.textFont || ''} onChange={e => updateField('textFont', e.target.value)} />
+              <FormField id="about-text-color" label="Color Texto" value={aboutContent.textColor || ''} onChange={e => updateField('textColor', e.target.value)} />
+            </div>
+            <FormField id="ab-i" label="URL Imagen" value={aboutContent.imageUrl} onChange={e => updateField('imageUrl', e.target.value)} />
             <div className="mb-2">
               <input type="file" accept="image/*" onChange={async (e) => {
                 const file = e.target.files?.[0];
@@ -317,14 +372,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
                 };
                 reader.readAsDataURL(file);
               }} />
-              {(content as AboutSection).imageUrl && (content as AboutSection).imageUrl.startsWith('data:image') && (
-                <img src={(content as AboutSection).imageUrl} alt="preview" className="mt-1 h-16 object-contain" />
+              {aboutContent.imageUrl && aboutContent.imageUrl.startsWith('data:image') && (
+                <img src={aboutContent.imageUrl} alt="preview" className="mt-1 h-16 object-contain" />
               )}
             </div>
-            <FormField id="ab-bt" label="Texto del Botón" value={(content as AboutSection).button.text} onChange={e => updateButtonField('text', e.target.value)} />
-            <FormField id="ab-bl" label="Enlace del Botón" value={(content as AboutSection).button.link} onChange={e => updateButtonField('link', e.target.value)} />
+            <FormField id="ab-bt" label="Texto del Botón" value={aboutContent.button.text} onChange={e => updateButtonField('text', e.target.value)} />
+            <FormField id="ab-bl" label="Enlace del Botón" value={aboutContent.button.link} onChange={e => updateButtonField('link', e.target.value)} />
           </div>
         );
+      }
       case 'map':
         return (
           <div>
@@ -333,19 +389,96 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
           </div>
         );
       case 'contact':
+        const contactContent = content as ContactSection;
         return (
           <div>
-            <FormField id="c-t" label="Título" value={(content as ContactSection).title} onChange={e => updateField('title', e.target.value)} />
-            <FormField id="c-a" label="Dirección" value={(content as ContactSection).address} onChange={e => updateField('address', e.target.value)} />
-            <FormField id="c-p" label="Teléfono" value={(content as ContactSection).phone} onChange={e => updateField('phone', e.target.value)} />
-            <FormField id="c-e" label="Email" value={(content as ContactSection).email} onChange={e => updateField('email', e.target.value)} />
+            <FormField id="c-t" label="Título" value={contactContent.title} onChange={e => updateField('title', e.target.value)} />
+            <FormField id="c-recipient" label="Email de destino (recibe mensajes)" value={contactContent.recipientEmail || ''} onChange={e => updateField('recipientEmail', e.target.value)} />
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Ancho del formulario (desktop)</label>
+              <input
+                type="range"
+                min={30}
+                max={80}
+                value={Math.round((contactContent.formWidth ?? 0.6) * 100)}
+                onChange={(e) => updateField('formWidth', Math.max(0.3, Math.min(0.8, Number(e.target.value) / 100)))}
+              />
+              <div className="text-sm text-gray-600 mt-1">{Math.round((contactContent.formWidth ?? 0.6) * 100)}%</div>
+            </div>
+            <h4 className="font-semibold mt-4 mb-2">Campos del Formulario</h4>
+            {contactContent.fields && contactContent.fields.length > 0 ? contactContent.fields.map((field, i) => (
+              <CollapsibleCard key={field.id} title={field.label || `Campo ${i + 1}`} onDelete={() => updateList('fields', contactContent.fields.filter(f => f.id !== field.id))}>
+                <FormField id={`cf-label-${field.id}`} label="Etiqueta" value={field.label} onChange={e => {
+                  const newFields = [...contactContent.fields];
+                  newFields[i].label = e.target.value;
+                  updateList('fields', newFields);
+                }} />
+                <FormField id={`cf-name-${field.id}`} label="Nombre (name)" value={field.name} onChange={e => {
+                  const newFields = [...contactContent.fields];
+                  newFields[i].name = e.target.value;
+                  updateList('fields', newFields);
+                }} />
+                <FormField id={`cf-type-${field.id}`} label="Tipo" as="select" value={field.type} onChange={e => {
+                  const newFields = [...contactContent.fields];
+                  newFields[i].type = e.target.value as any;
+                  updateList('fields', newFields);
+                }}>
+                  <option value="text">Texto</option>
+                  <option value="email">Email</option>
+                  <option value="textarea">Área de texto</option>
+                  <option value="tel">Teléfono</option>
+                </FormField>
+                <div className="flex items-center mb-2">
+                  <input id={`cf-req-${field.id}`} type="checkbox" checked={field.required} onChange={e => {
+                    const newFields = [...contactContent.fields];
+                    newFields[i].required = e.target.checked;
+                    updateList('fields', newFields);
+                  }} className="mr-2" />
+                  <label htmlFor={`cf-req-${field.id}`}>Requerido</label>
+                </div>
+                <FormField id={`cf-icon-${field.id}`} label="Icono (SVG o imagen base64)" as="textarea" value={field.icon || ''} onChange={e => {
+                  const newFields = [...contactContent.fields];
+                  newFields[i].icon = e.target.value;
+                  updateList('fields', newFields);
+                }} />
+                <div className="mb-2">
+                  <input type="file" accept="image/*" onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      if (typeof reader.result === 'string') {
+                        const newFields = [...contactContent.fields];
+                        newFields[i].icon = reader.result;
+                        updateList('fields', newFields);
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  }} />
+                  {field.icon && field.icon.startsWith('data:image') && (
+                    <img src={field.icon} alt="icon preview" className="mt-1 h-8 object-contain" />
+                  )}
+                </div>
+              </CollapsibleCard>
+            )) : <p className="text-gray-500">No hay campos. Agrega uno abajo.</p>}
+            <button onClick={() => updateList('fields', [...(contactContent.fields || []), { id: uuidv4(), label: 'Nuevo campo', name: `field${(contactContent.fields?.length || 0) + 1}`, type: 'text', required: false }])} className="mt-2 text-sm bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600">
+              Añadir Campo
+            </button>
           </div>
         );
       case 'text':
         return (
           <div>
             <FormField id="txt-t" label="Título" value={(content as TextSection).title} onChange={e => updateField('title', e.target.value)} />
+            <div className="flex gap-2 mb-2">
+              <FormField id="txt-title-font" label="Fuente Título" value={(content as TextSection).titleFont || ''} onChange={e => updateField('titleFont', e.target.value)} />
+              <FormField id="txt-title-color" label="Color Título" value={(content as TextSection).titleColor || ''} onChange={e => updateField('titleColor', e.target.value)} />
+            </div>
             <FormField id="txt-c" as="textarea" label="Contenido" value={(content as TextSection).content} onChange={e => updateField('content', e.target.value)} />
+            <div className="flex gap-2 mb-2">
+              <FormField id="txt-text-font" label="Fuente Texto" value={(content as TextSection).textFont || ''} onChange={e => updateField('textFont', e.target.value)} />
+              <FormField id="txt-text-color" label="Color Texto" value={(content as TextSection).textColor || ''} onChange={e => updateField('textColor', e.target.value)} />
+            </div>
           </div>
         );
       case 'image': {
@@ -392,6 +525,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
             <FormField id="html-c" as="textarea" label="Contenido HTML" value={(content as HtmlSection).htmlContent} onChange={e => updateField('htmlContent', e.target.value)} />
           </div>
         );
+      case 'estilos':
+        // Editor para la sección de estilos de título y texto
+        return (
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Estilos de Título y Texto</h3>
+            <EstilosSection
+              section={content}
+              editable={true}
+              onChange={(field, value) => updateField(field, value)}
+            />
+          </div>
+        );
       default:
         return <p>Editor no disponible para el tipo de sección: {section.type}</p>;
     }
@@ -399,7 +544,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
 
   const selectedPage = draftData.pages.find(p => p.id === selectedPageId);
   const selectedPageIndex = draftData.pages.findIndex(p => p.id === selectedPageId);
-  const sectionTypes: SectionType[] = ['hero', 'services', 'products', 'about', 'map', 'contact', 'text', 'image', 'html'];
+  const sectionTypes: SectionType[] = ['hero', 'services', 'products', 'about', 'map', 'contact', 'text', 'image', 'html', 'estilos'];
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -426,58 +571,63 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
       </aside>
       {/* Contenido principal */}
       <main className="flex-1 p-6 overflow-y-auto">
-        {activeTab === 'páginas' && (
-          draftData.pages.length === 0 ? (
-            <div className="bg-white p-8 rounded shadow text-center">
-              <p className="mb-4 text-lg">No hay páginas creadas. Crea la primera página para comenzar.</p>
-              <button onClick={handleAddPage} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Crear Página Inicial</button>
-            </div>
-          ) : selectedPage && selectedPageIndex !== -1 ? (
-            <div>
-              <div className="mb-4 bg-white p-4 rounded-md border">
-                <h3 className="text-lg font-semibold mb-3">Administrar Páginas</h3>
-                <div className="flex items-center gap-4 mb-4">
-                  <select value={selectedPageId || ''} onChange={e => setSelectedPageId(e.target.value)} className="flex-grow w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white">
-                    {draftData.pages.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+        <>
+          {activeTab === 'estilos' && (
+            <>{/* ...editor de estilos, iconos sociales header, datos contacto... */}</>
+          )}
+          {activeTab === 'páginas' && (
+            draftData.pages.length === 0 ? (
+              <div className="bg-white p-8 rounded shadow text-center">
+                <p className="mb-4 text-lg">No hay páginas creadas. Crea la primera página para comenzar.</p>
+                <button onClick={handleAddPage} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Crear Página Inicial</button>
+              </div>
+            ) : selectedPage && selectedPageIndex !== -1 ? (
+              <div>
+                <div className="mb-4 bg-white p-4 rounded-md border">
+                  <h3 className="text-lg font-semibold mb-3">Administrar Páginas</h3>
+                  <div className="flex items-center gap-4 mb-4">
+                    <select value={selectedPageId || ''} onChange={e => setSelectedPageId(e.target.value)} className="flex-grow w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white">
+                      {draftData.pages.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                    <button onClick={handleAddPage} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Añadir Página</button>
+                    <button onClick={() => handleDeletePage(selectedPageId!)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600" disabled={draftData.pages.length <= 1}>Eliminar Página</button>
+                  </div>
+                  <DragDropContext onDragEnd={onDragEnd}>
+                    <Droppable droppableId="sections">
+                      {(provided) => (
+                        <div ref={provided.innerRef} {...provided.droppableProps}>
+                          {selectedPage.sections.map((section, index) => (
+                            <React.Fragment key={section.id}>
+                              <Draggable draggableId={section.id} index={index}>
+                                {(provided) => (
+                                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                                    <CollapsibleCard title={section.type.charAt(0).toUpperCase() + section.type.slice(1)} onDelete={() => handleDeleteSection(selectedPageIndex, section.id)}>
+                                      {renderSectionEditor(selectedPageIndex, index)}
+                                    </CollapsibleCard>
+                                  </div>
+                                )}
+                              </Draggable>
+                            </React.Fragment>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                  <div className="mt-4">
+                    {sectionTypes.map(type => (
+                      <button key={type} onClick={() => handleAddSection(selectedPageIndex, type)} className="mr-2 mt-2 text-sm bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600">
+                        Añadir {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
                     ))}
-                  </select>
-                  <button onClick={handleAddPage} className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">Añadir Página</button>
-                  <button onClick={() => handleDeletePage(selectedPageId!)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600" disabled={draftData.pages.length <= 1}>Eliminar Página</button>
-                </div>
-                <DragDropContext onDragEnd={onDragEnd}>
-                  <Droppable droppableId="sections">
-                    {(provided) => (
-                      <div ref={provided.innerRef} {...provided.droppableProps}>
-                        {selectedPage.sections.map((section, index) => (
-                          <React.Fragment key={section.id}>
-                            <Draggable draggableId={section.id} index={index}>
-                              {(provided) => (
-                                <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                                  <CollapsibleCard title={section.type.charAt(0).toUpperCase() + section.type.slice(1)} onDelete={() => handleDeleteSection(selectedPageIndex, section.id)}>
-                                    {renderSectionEditor(selectedPageIndex, index)}
-                                  </CollapsibleCard>
-                                </div>
-                              )}
-                            </Draggable>
-                          </React.Fragment>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
-                <div className="mt-4">
-                  {sectionTypes.map(type => (
-                    <button key={type} onClick={() => handleAddSection(selectedPageIndex, type)} className="mr-2 mt-2 text-sm bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600">
-                      Añadir {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </button>
-                  ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : null
-        )}
+            ) : null
+          )}
+        </>
         {activeTab === 'general' && (
           <div className="bg-white p-4 rounded-md border">
             <h3 className="text-lg font-semibold mb-3">Identidad del Sitio</h3>
@@ -506,15 +656,207 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
                 <img src={draftData.siteIdentity.logoImageUrl} alt="Logo preview" className="mt-2 h-16 object-contain" />
               )}
             </div>
+            <hr className="my-6" />
+            <h3 className="text-lg font-semibold mb-3">WhatsApp Flotante</h3>
+            <FormField id="wa-phone" label="Número de WhatsApp" value={draftData.whatsapp?.phone || ''} onChange={e => setDraftData(d => ({ ...d, whatsapp: { ...d.whatsapp, phone: e.target.value } }))} />
+            <FormField id="wa-msg" label="Mensaje por defecto" value={draftData.whatsapp?.message || ''} onChange={e => setDraftData(d => ({ ...d, whatsapp: { ...d.whatsapp, message: e.target.value } }))} />
+            <div className="mb-4 flex items-center gap-2">
+              <input id="wa-enabled" type="checkbox" checked={draftData.whatsapp?.enabled ?? true} onChange={e => setDraftData(d => ({ ...d, whatsapp: { ...d.whatsapp, enabled: e.target.checked } }))} />
+              <label htmlFor="wa-enabled" className="text-sm">Mostrar botón flotante de WhatsApp</label>
+            </div>
+            {(draftData.whatsapp?.enabled && !(draftData.whatsapp?.phone || '').replace(/[^0-9]/g, '')) && (
+              <div className="text-yellow-700 bg-yellow-50 border border-yellow-200 rounded p-2 mb-2 text-sm">
+                El botón está habilitado pero falta el número. Ingresa un número con código de país (ej: 59812345678).
+              </div>
+            )}
+            <div className="mb-4">
+              <button
+                type="button"
+                className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                onClick={() => {
+                  const phone = (draftData.whatsapp?.phone || '').replace(/[^0-9]/g, '');
+                  if (!phone) { alert('Ingresa un número de WhatsApp válido'); return; }
+                  const msg = draftData.whatsapp?.message ? `?text=${encodeURIComponent(draftData.whatsapp.message)}` : '';
+                  const url = `https://wa.me/${phone}${msg}`;
+                  window.open(url, '_blank', 'noopener');
+                }}
+              >
+                Probar WhatsApp
+              </button>
+              {/* Vista previa del enlace generado */}
+              {(() => {
+                const phonePreview = (draftData.whatsapp?.phone || '').replace(/[^0-9]/g, '');
+                const previewUrl = phonePreview
+                  ? `https://wa.me/${phonePreview}${draftData.whatsapp?.message ? `?text=${encodeURIComponent(draftData.whatsapp.message)}` : ''}`
+                  : '';
+                return (
+                  <div className="mt-2 text-sm text-gray-600 break-all">
+                    {phonePreview ? (
+                      <>
+                        Enlace generado: {' '}
+                        <a href={previewUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">{previewUrl}</a>
+                      </>
+                    ) : (
+                      <span className="text-gray-500">Ingresa un número para ver el enlace.</span>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         )}
         {activeTab === 'estilos' && (
-          <div>
-            <h3 className="text-lg font-semibold mb-3">Estilos Globales</h3>
-            <FormField id="global-bg" label="Color de Fondo" value={draftData.globalStyles.backgroundColor} onChange={e => handleGlobalStylesChange('backgroundColor', e.target.value)} />
-            <FormField id="header-bg" label="Color Fondo Header" value={draftData.headerStyles.backgroundColor} onChange={e => handleHeaderStylesChange('backgroundColor', e.target.value)} />
-            <FormField id="footer-bg" label="Color Fondo Footer" value={draftData.footerStyles.backgroundColor} onChange={e => handleFooterStylesChange('backgroundColor', e.target.value)} />
-          </div>
+          <>
+            <div className="bg-white p-4 rounded-md border mb-6">
+              <h3 className="text-lg font-semibold mb-3">Estilos Globales</h3>
+              <FormField id="global-bg" label="Color de Fondo" value={draftData.globalStyles.backgroundColor} onChange={e => handleGlobalStylesChange('backgroundColor', e.target.value)} />
+            </div>
+            <div className="bg-white p-4 rounded-md border mb-6">
+              <h3 className="text-lg font-semibold mb-3">Estilos Header</h3>
+              <FormField id="header-bg" label="Color Fondo Header" value={draftData.headerStyles.backgroundColor} onChange={e => handleHeaderStylesChange('backgroundColor', e.target.value)} />
+              <FormField id="header-font" label="Fuente Header" value={draftData.headerMenuFooterStyles?.headerFont || ''} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, headerFont: e.target.value } }))} />
+              <FormField id="header-color" label="Color Texto Header" value={draftData.headerMenuFooterStyles?.headerColor || ''} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, headerColor: e.target.value } }))} />
+            </div>
+            <div className="bg-white p-4 rounded-md border mb-6">
+              <h3 className="text-lg font-semibold mb-3">Iconos Sociales Header</h3>
+              <div className="mt-4">
+                <h4 className="font-semibold mb-2">Iconos Sociales Header</h4>
+                {(draftData.socialIconsHeader || []).map((icon, idx) => (
+                  <div key={icon.id} className="flex gap-2 mb-2 items-center">
+                    <FormField id={`social-header-name-${icon.id}`} label="" value={icon.name} onChange={e => {
+                      const newIcons = [...(draftData.socialIconsHeader || [])];
+                      newIcons[idx].name = e.target.value;
+                      setDraftData(d => ({ ...d, socialIconsHeader: newIcons }));
+                    }} placeholder="Nombre" />
+                    <FormField id={`social-header-url-${icon.id}`} label="" value={icon.url} onChange={e => {
+                      const newIcons = [...(draftData.socialIconsHeader || [])];
+                      newIcons[idx].url = e.target.value;
+                      setDraftData(d => ({ ...d, socialIconsHeader: newIcons }));
+                    }} placeholder="https://..." />
+                    <FormField id={`social-header-svg-${icon.id}`} label="" as="textarea" value={icon.iconSvg} onChange={e => {
+                      const newIcons = [...(draftData.socialIconsHeader || [])];
+                      newIcons[idx].iconSvg = e.target.value;
+                      setDraftData(d => ({ ...d, socialIconsHeader: newIcons }));
+                    }} placeholder="SVG" />
+                    <button onClick={() => setDraftData(d => ({ ...d, socialIconsHeader: (d.socialIconsHeader || []).filter((_, i) => i !== idx) }))} className="text-red-500">Eliminar</button>
+                  </div>
+                ))}
+                <button onClick={() => setDraftData(d => ({ ...d, socialIconsHeader: [...(d.socialIconsHeader || []), { id: uuidv4(), name: '', url: '', iconSvg: '' }] }))} className="text-sm bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600">Añadir Icono</button>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-md border mb-6">
+              <h3 className="text-lg font-semibold mb-3">Estilos Menú</h3>
+              <FormField id="menu-font" label="Fuente Menú" value={draftData.headerMenuFooterStyles?.menuFont || ''} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, menuFont: e.target.value } }))} />
+              <FormField id="menu-color" label="Color Texto Menú" value={draftData.headerMenuFooterStyles?.menuColor || ''} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, menuColor: e.target.value } }))} />
+              <div className="mt-4">
+                <h4 className="font-semibold mb-2">Ítems del Menú</h4>
+                {(draftData.menuItems || []).map((item, idx) => (
+                  <div key={item.id} className="flex gap-2 mb-2 items-center">
+                    <FormField id={`menu-label-${item.id}`} label="" value={item.label} onChange={e => {
+                      const newItems = [...(draftData.menuItems || [])];
+                      newItems[idx].label = e.target.value;
+                      setDraftData(d => ({ ...d, menuItems: newItems }));
+                    }} placeholder="Nombre" />
+                    <FormField id={`menu-path-${item.id}`} label="" value={item.path} onChange={e => {
+                      const newItems = [...(draftData.menuItems || [])];
+                      newItems[idx].path = e.target.value;
+                      setDraftData(d => ({ ...d, menuItems: newItems }));
+                    }} placeholder="/ruta" />
+                    <button onClick={() => setDraftData(d => ({ ...d, menuItems: (d.menuItems || []).filter((_, i) => i !== idx) }))} className="text-red-500">Eliminar</button>
+                  </div>
+                ))}
+                <button onClick={() => setDraftData(d => ({ ...d, menuItems: [...(d.menuItems || []), { id: uuidv4(), label: '', path: '/' }] }))} className="text-sm bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600">Añadir Ítem</button>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-md border mb-6">
+              <h3 className="text-lg font-semibold mb-3">Estilos Footer</h3>
+              <FormField id="footer-bg" label="Color Fondo Footer" value={draftData.footerStyles.backgroundColor} onChange={e => handleFooterStylesChange('backgroundColor', e.target.value)} />
+              <FormField id="footer-font" label="Fuente Footer" value={draftData.headerMenuFooterStyles?.footerFont || ''} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, footerFont: e.target.value } }))} />
+              <FormField id="footer-color" label="Color Texto Footer" value={draftData.headerMenuFooterStyles?.footerColor || ''} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, footerColor: e.target.value } }))} />
+              <div className="mt-4">
+                <h4 className="font-semibold mb-2">Iconos Sociales</h4>
+                {(draftData.socialIcons || []).map((icon, idx) => (
+                  <div key={icon.id} className="flex gap-2 mb-2 items-center">
+                    <FormField id={`social-name-${icon.id}`} label="" value={icon.name} onChange={e => {
+                      const newIcons = [...(draftData.socialIcons || [])];
+                      newIcons[idx].name = e.target.value;
+                      setDraftData(d => ({ ...d, socialIcons: newIcons }));
+                    }} placeholder="Nombre" />
+                    <FormField id={`social-url-${icon.id}`} label="" value={icon.url} onChange={e => {
+                      const newIcons = [...(draftData.socialIcons || [])];
+                      newIcons[idx].url = e.target.value;
+                      setDraftData(d => ({ ...d, socialIcons: newIcons }));
+                    }} placeholder="https://..." />
+                    <FormField id={`social-svg-${icon.id}`} label="" as="textarea" value={icon.iconSvg} onChange={e => {
+                      const newIcons = [...(draftData.socialIcons || [])];
+                      newIcons[idx].iconSvg = e.target.value;
+                      setDraftData(d => ({ ...d, socialIcons: newIcons }));
+                    }} placeholder="SVG" />
+                    <button onClick={() => setDraftData(d => ({ ...d, socialIcons: (d.socialIcons || []).filter((_, i) => i !== idx) }))} className="text-red-500">Eliminar</button>
+                  </div>
+                ))}
+                <button onClick={() => setDraftData(d => ({ ...d, socialIcons: [...(d.socialIcons || []), { id: uuidv4(), name: '', url: '', iconSvg: '' }] }))} className="text-sm bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600">Añadir Icono</button>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-md border mb-6">
+              <h3 className="text-lg font-semibold mb-3">Datos de Contacto</h3>
+              <FormField id="contact-phone" label="Teléfono" value={draftData.contactInfo?.phone || ''} onChange={e => setDraftData(d => ({ ...d, contactInfo: { ...d.contactInfo, phone: e.target.value } }))} />
+              <FormField id="contact-address" label="Dirección" value={draftData.contactInfo?.address || ''} onChange={e => setDraftData(d => ({ ...d, contactInfo: { ...d.contactInfo, address: e.target.value } }))} />
+              <FormField id="contact-email" label="Email" value={draftData.contactInfo?.email || ''} onChange={e => setDraftData(d => ({ ...d, contactInfo: { ...d.contactInfo, email: e.target.value } }))} />
+              <div className="mt-4">
+                <h4 className="font-semibold mb-2">Iconos Sociales Contacto</h4>
+                {(draftData.contactInfo?.socialIcons || []).map((icon, idx) => (
+                  <div key={icon.id} className="flex gap-2 mb-2 items-center">
+                    <FormField id={`contact-social-name-${icon.id}`} label="" value={icon.name} onChange={e => {
+                      const newIcons = [...(draftData.contactInfo?.socialIcons || [])];
+                      newIcons[idx].name = e.target.value;
+                      setDraftData(d => ({ ...d, contactInfo: { ...d.contactInfo, socialIcons: newIcons } }));
+                    }} placeholder="Nombre" />
+                    <FormField id={`contact-social-url-${icon.id}`} label="" value={icon.url} onChange={e => {
+                      const newIcons = [...(draftData.contactInfo?.socialIcons || [])];
+                      newIcons[idx].url = e.target.value;
+                      setDraftData(d => ({ ...d, contactInfo: { ...d.contactInfo, socialIcons: newIcons } }));
+                    }} placeholder="https://..." />
+                    <FormField id={`contact-social-svg-${icon.id}`} label="" as="textarea" value={icon.iconSvg} onChange={e => {
+                      const newIcons = [...(draftData.contactInfo?.socialIcons || [])];
+                      newIcons[idx].iconSvg = e.target.value;
+                      setDraftData(d => ({ ...d, contactInfo: { ...d.contactInfo, socialIcons: newIcons } }));
+                    }} placeholder="SVG" />
+                    <button onClick={() => setDraftData(d => ({ ...d, contactInfo: { ...d.contactInfo, socialIcons: (d.contactInfo?.socialIcons || []).filter((_, i) => i !== idx) } }))} className="text-red-500">Eliminar</button>
+                  </div>
+                ))}
+                <button onClick={() => setDraftData(d => ({ ...d, contactInfo: { ...d.contactInfo, socialIcons: [...(d.contactInfo?.socialIcons || []), { id: uuidv4(), name: '', url: '', iconSvg: '' }] } }))} className="text-sm bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600">Añadir Icono</button>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-md border">
+              <h3 className="text-lg font-semibold mb-3">Estilos de Título y Texto</h3>
+              <EstilosSection
+                section={draftData.pages[0]?.sections.find(s => s.type === 'estilos')?.content || {}}
+                editable={true}
+                onChange={(field, value) => {
+                  // Actualizar la sección de estilos en la primera página
+                  setDraftData(prev => {
+                    const newPages = [...prev.pages];
+                    const estilosIndex = newPages[0].sections.findIndex(s => s.type === 'estilos');
+                    if (estilosIndex !== -1) {
+                      newPages[0].sections[estilosIndex].content = {
+                        ...newPages[0].sections[estilosIndex].content,
+                        [field]: value
+                      };
+                    } else {
+                      // Si no existe, la crea
+                      newPages[0].sections.push({
+                        id: 'estilos-section',
+                        type: 'estilos',
+                        content: { [field]: value }
+                      });
+                    }
+                    return { ...prev, pages: newPages };
+                  });
+                }}
+              />
+            </div>
+          </>
         )}
         <footer className="mt-6 p-4 bg-white border-t border-gray-200 flex justify-end gap-2">
           <button onClick={handleDiscard} className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400">Descartar</button>

@@ -4,6 +4,12 @@ import { Product } from '../types';
 interface ProductsProps {
   title: string;
   products: Product[];
+  titleFont?: string;
+  titleColor?: string;
+  textFont?: string;
+  textColor?: string;
+  editMode?: boolean;
+  onUpdateField?: (field: string, value: any) => void;
 }
 
 const WhatsappIcon = () => (
@@ -12,7 +18,7 @@ const WhatsappIcon = () => (
     </svg>
 )
 
-const Products: React.FC<ProductsProps> = ({ title, products }) => {
+const Products: React.FC<ProductsProps> = ({ title, products, titleFont, titleColor, textFont, textColor, editMode, onUpdateField }) => {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
 
   const categories = useMemo(() => ['Todos', ...Array.from(new Set(products.map(p => p.category)))], [products]);
@@ -28,7 +34,13 @@ const Products: React.FC<ProductsProps> = ({ title, products }) => {
     <section id="products" className="py-20">
       <div className="container mx-auto px-6">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold" style={{fontFamily: 'var(--heading-font)'}}>{title}</h2>
+          <h2
+            className="text-4xl font-bold"
+            style={{fontFamily: titleFont || 'var(--heading-font)', color: titleColor || undefined}}
+            contentEditable={!!editMode}
+            suppressContentEditableWarning
+            onBlur={(e) => onUpdateField?.('title', e.currentTarget.innerText)}
+          >{title}</h2>
           <div className="w-24 h-1 bg-[var(--primary-color)] mx-auto mt-4"></div>
         </div>
         <div className="flex justify-center mb-8 space-x-2 md:space-x-4">
@@ -48,18 +60,29 @@ const Products: React.FC<ProductsProps> = ({ title, products }) => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProducts.map(product => (
-            <div key={product.id} className="bg-white rounded-lg shadow-lg overflow-hidden group">
+            <div key={product.id} className="rounded-lg shadow-lg overflow-hidden group relative">
               <div className="relative overflow-hidden">
-                  <img src={product.imageUrl} alt={product.name} className="w-full h-60 object-cover transform group-hover:scale-110 transition-transform duration-300" />
-                   {product.whatsappLink && (
-                      <a href={product.whatsappLink} target="_blank" rel="noopener noreferrer" className="absolute top-4 right-4 bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors opacity-0 group-hover:opacity-100 duration-300">
-                          <WhatsappIcon />
-                      </a>
-                  )}
-              </div>
-              <div className="p-6">
-                <p className="text-sm text-[var(--primary-color)] font-semibold mb-1">{product.category}</p>
-                <h3 className="text-xl font-bold" style={{fontFamily: 'var(--heading-font)'}}>{product.name}</h3>
+                <img src={product.imageUrl} alt={product.name} className="w-full h-60 object-cover transform group-hover:scale-110 transition-transform duration-300" />
+                {/* Overlay con el nombre centrado al hover */}
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <h3 className="text-xl md:text-2xl font-bold text-white text-center px-3" style={{fontFamily: textFont || 'var(--body-font)', color: textColor || undefined}}>
+                    {product.name}
+                  </h3>
+                </div>
+                {/* Icono personalizado del producto (opcional) */}
+                {product.icon && (
+                  product.icon.startsWith('<svg') ? (
+                    <div className="absolute top-4 left-4 bg-white/80 rounded-full p-2" dangerouslySetInnerHTML={{ __html: product.icon }} style={{ width: 40, height: 40 }} />
+                  ) : (
+                    <img src={product.icon} alt="icono" className="absolute top-4 left-4 w-10 h-10 object-contain bg-white/80 rounded-full p-1" />
+                  )
+                )}
+                {/* Botón WhatsApp aparece en hover */}
+                {product.whatsappLink && (
+                  <a href={product.whatsappLink} target="_blank" rel="noopener noreferrer" className="absolute top-4 right-4 bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors opacity-0 group-hover:opacity-100 duration-300">
+                    <WhatsappIcon />
+                  </a>
+                )}
               </div>
             </div>
           ))}

@@ -3,15 +3,16 @@ import { SiteData } from '../types';
 
 interface FooterProps {
   siteIdentity: SiteData['siteIdentity'];
+  headerMenuFooterStyles?: import('../types').HeaderMenuFooterStyles;
 }
 
-const Footer: React.FC<FooterProps> = ({ siteIdentity }) => {
+const Footer: React.FC<FooterProps> = ({ siteIdentity, headerMenuFooterStyles }) => {
   return (
-    <footer style={{ backgroundColor: 'var(--footer-bg-color)', color: 'var(--footer-text-color)' }}>
+    <footer style={{ backgroundColor: 'var(--footer-bg-color)', color: 'var(--footer-text-color)', fontFamily: headerMenuFooterStyles?.footerFont || undefined }}>
       <div className="container mx-auto px-6 py-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4">{siteIdentity.logoTextPart1}<span className="text-gray-400">{siteIdentity.logoTextPart2}</span></h3>
+            <h3 className="text-xl font-bold mb-4" style={{ color: headerMenuFooterStyles?.footerColor || undefined, fontFamily: headerMenuFooterStyles?.footerFont || undefined }}>{siteIdentity.logoTextPart1}<span className="text-gray-400">{siteIdentity.logoTextPart2}</span></h3>
             <p className="text-gray-400">Soluciones gráficas integrales para tu negocio. Calidad y compromiso en cada trabajo.</p>
           </div>
           <div>

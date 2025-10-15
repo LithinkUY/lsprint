@@ -1,8 +1,43 @@
+// Información de contacto editable
+export interface ContactInfo {
+  phone: string;
+  address: string;
+  email: string;
+  socialIcons?: SocialIcon[];
+}
+// Menú editable
+export interface MenuItem {
+  id: string;
+  label: string;
+  path: string;
+}
+
+// Iconos sociales editables
+export interface SocialIcon {
+  id: string;
+  name: string;
+  url: string;
+  iconSvg: string; // SVG string
+}
+export interface HeaderMenuFooterStyles {
+  headerFont?: string;
+  headerColor?: string;
+  menuFont?: string;
+  menuColor?: string;
+  footerFont?: string;
+  footerColor?: string;
+}
 // types.ts
 import { v4 as uuidv4 } from 'uuid';
 
 // Tipos básicos
-export type SectionType = 'hero' | 'slides' | 'services' | 'products' | 'about' | 'map' | 'contact' | 'text' | 'image' | 'images' | 'html';
+export type SectionType = 'hero' | 'slides' | 'services' | 'products' | 'about' | 'map' | 'contact' | 'text' | 'image' | 'images' | 'html' | 'estilos';
+export interface EstilosSection {
+  titleFont?: string;
+  titleColor?: string;
+  textFont?: string;
+  textColor?: string;
+}
 
 // Interfaces para los datos de cada sección
 export interface HeroSlide {
@@ -27,6 +62,7 @@ export interface Product {
   name: string;
   category: string;
   imageUrl: string;
+  icon?: string; // SVG o imagen base64
   whatsappLink?: string;
 }
 
@@ -43,11 +79,19 @@ export interface HeroSection {
 export interface ServicesSection {
   title: string;
   services: Service[];
+  titleFont?: string;
+  titleColor?: string;
+  textFont?: string;
+  textColor?: string;
 }
 
 export interface ProductsSection {
   title: string;
   products: Product[];
+  titleFont?: string;
+  titleColor?: string;
+  textFont?: string;
+  textColor?: string;
 }
 
 export interface AboutSection {
@@ -56,23 +100,46 @@ export interface AboutSection {
   content: string;
   imageUrl: string;
   button: { text: string; link: string };
+  titleFont?: string;
+  titleColor?: string;
+  textFont?: string;
+  textColor?: string;
 }
 
 export interface MapSection {
   title: string;
   embedUrl: string;
+  titleFont?: string;
+  titleColor?: string;
+}
+
+export interface ContactFormField {
+  id: string;
+  label: string;
+  name: string;
+  type: 'text' | 'email' | 'tel' | 'textarea';
+  required?: boolean;
+  icon?: string; // SVG o imagen base64
 }
 
 export interface ContactSection {
   title: string;
-  address: string;
-  phone: string;
-  email: string;
+  fields: ContactFormField[];
+  submitText?: string;
+  successMessage?: string;
+  errorMessage?: string;
+  recipientEmail?: string;
+  // Porcentaje del ancho del formulario en desktop (0.3 - 0.8)
+  formWidth?: number;
 }
 
 export interface TextSection {
   title: string;
   content: string;
+  titleFont?: string;
+  titleColor?: string;
+  textFont?: string;
+  textColor?: string;
 }
 
 export interface ImageSection {
@@ -89,7 +156,7 @@ export interface HtmlSection {
 export interface Section {
   id: string;
   type: SectionType;
-  content: HeroSection | ServicesSection | ProductsSection | AboutSection | MapSection | ContactSection | TextSection | ImageSection | HtmlSection;
+  content: HeroSection | ServicesSection | ProductsSection | AboutSection | MapSection | ContactSection | TextSection | ImageSection | HtmlSection | EstilosSection;
 }
 
 // Interface para una página
@@ -101,6 +168,15 @@ export interface Page {
 }
 
 // Interfaces para los estilos y la identidad del sitio
+
+export interface HeaderMenuFooterStyles {
+  headerFont?: string;
+  headerColor?: string;
+  menuFont?: string;
+  menuColor?: string;
+  footerFont?: string;
+  footerColor?: string;
+}
 export interface SiteIdentity {
   logoTextPart1: string;
   logoTextPart2: string;
@@ -120,17 +196,31 @@ export interface HeaderFooterStyles {
   textColor: string;
 }
 
+// Configuración global de WhatsApp
+export interface WhatsAppConfig {
+  phone: string;
+  message: string;
+  enabled: boolean;
+}
+
 // Interface principal del sitio
 export interface SiteData {
   siteIdentity: SiteIdentity;
   globalStyles: GlobalStyles;
   headerStyles: HeaderFooterStyles;
   footerStyles: HeaderFooterStyles;
+  headerMenuFooterStyles?: HeaderMenuFooterStyles;
+  menuItems?: MenuItem[];
+  socialIcons?: SocialIcon[];
+  socialIconsHeader?: SocialIcon[];
+  contactInfo?: ContactInfo;
   pages: Page[];
+  whatsapp?: WhatsAppConfig;
 }
 
 // Funciones de creación
 export const createNewSlide = (): HeroSlide => ({
+
   id: uuidv4(),
   title: '',
   subtitle: '',
@@ -172,7 +262,23 @@ export const createNewSectionOfType = (type: SectionType): Section => {
     case 'map':
       return { id: uuidv4(), type, content: { title: '', embedUrl: '' } };
     case 'contact':
-      return { id: uuidv4(), type, content: { title: '', address: '', phone: '', email: '' } };
+      return {
+        id: uuidv4(),
+        type,
+        content: {
+          title: 'Contacto',
+          fields: [
+            { id: uuidv4(), label: 'Nombre', name: 'nombre', type: 'text', required: true },
+            { id: uuidv4(), label: 'Email', name: 'email', type: 'email', required: true },
+            { id: uuidv4(), label: 'Mensaje', name: 'mensaje', type: 'textarea', required: true },
+          ],
+          submitText: 'Enviar',
+          successMessage: '¡Mensaje enviado!',
+          errorMessage: 'Hubo un error. Intenta de nuevo.',
+          recipientEmail: '',
+          formWidth: 0.6,
+        }
+      };
     case 'text':
       return { id: uuidv4(), type, content: { title: '', content: '' } };
     case 'image':

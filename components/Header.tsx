@@ -4,11 +4,12 @@ import { SiteData, Page } from '../types';
 interface HeaderProps {
   siteIdentity: SiteData['siteIdentity'];
   pages: Page[];
-  isAuthenticated: boolean;
-  onLogout: () => void;
+  isAuthenticated?: boolean;
+  onLogout?: () => void;
+  headerMenuFooterStyles?: import('../types').HeaderMenuFooterStyles;
 }
 
-const Header: React.FC<HeaderProps> = ({ siteIdentity, pages, isAuthenticated, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ siteIdentity, pages, isAuthenticated, onLogout, headerMenuFooterStyles }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Custom navigation handler for client-side routing
@@ -21,10 +22,10 @@ const Header: React.FC<HeaderProps> = ({ siteIdentity, pages, isAuthenticated, o
   };
 
   return (
-    <header className="sticky top-0 z-40 shadow-md" style={{ backgroundColor: 'var(--header-bg-color)', color: 'var(--header-text-color)' }}>
+    <header className="sticky top-0 z-40 shadow-md" style={{ backgroundColor: 'var(--header-bg-color)', color: 'var(--header-text-color)', fontFamily: headerMenuFooterStyles?.headerFont || undefined }}>
       <div className="container mx-auto px-6 py-4 flex justify-between items-center">
         <a href="/" onClick={(e) => navigate(e, '/')} className="flex items-center">
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold" style={{ color: headerMenuFooterStyles?.headerColor || undefined, fontFamily: headerMenuFooterStyles?.headerFont || undefined }}>
             {siteIdentity.logoImageUrl ? (
               <img src={siteIdentity.logoImageUrl} alt={`${siteIdentity.logoTextPart1}${siteIdentity.logoTextPart2}`} className="h-10 w-auto" />
             ) : (
@@ -35,11 +36,11 @@ const Header: React.FC<HeaderProps> = ({ siteIdentity, pages, isAuthenticated, o
             )}
           </div>
         </a>
-        <nav className="hidden md:flex items-center space-x-6">
+        <nav className="hidden md:flex items-center space-x-6" style={{ fontFamily: headerMenuFooterStyles?.menuFont || undefined, color: headerMenuFooterStyles?.menuColor || undefined }}>
           {pages.map(page => (
             <a key={page.id} href={page.path} onClick={(e) => navigate(e, page.path)} className="hover:text-[var(--primary-color)] transition-colors duration-300 capitalize">{page.name}</a>
           ))}
-          {isAuthenticated && (
+          {isAuthenticated && onLogout && (
             <button onClick={onLogout} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors">
               Salir
             </button>
@@ -52,11 +53,11 @@ const Header: React.FC<HeaderProps> = ({ siteIdentity, pages, isAuthenticated, o
         </div>
       </div>
       {isMenuOpen && (
-        <div className="md:hidden" style={{ backgroundColor: 'var(--header-bg-color)', color: 'var(--header-text-color)' }}>
+        <div className="md:hidden" style={{ backgroundColor: 'var(--header-bg-color)', color: 'var(--header-text-color)', fontFamily: headerMenuFooterStyles?.menuFont || undefined }}>
           {pages.map(page => (
               <a key={page.id} href={page.path} onClick={(e) => navigate(e, page.path)} className="block py-2 px-4 text-sm hover:bg-[var(--primary-color)] hover:text-white capitalize">{page.name}</a>
           ))}
-          {isAuthenticated && (
+          {isAuthenticated && onLogout && (
             <button onClick={onLogout} className="w-full text-left bg-red-500 text-white px-4 py-2 hover:bg-red-600 transition-colors">
               Salir
             </button>

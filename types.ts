@@ -133,6 +133,11 @@ export interface ContactSection {
   recipientEmail?: string;
   // Porcentaje del ancho del formulario en desktop (0.3 - 0.8)
   formWidth?: number;
+  // Estilos opcionales para título y texto (descripción)
+  titleFont?: string;
+  titleColor?: string;
+  textFont?: string;
+  textColor?: string;
 }
 
 export interface TextSection {

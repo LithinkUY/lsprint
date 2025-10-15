@@ -134,6 +134,18 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
               </div>
             </div>
           )}
+          {section.type === 'contact' && (
+            <div className="space-y-2">
+              <input className="w-full border rounded px-2 py-1 text-xs" placeholder="Título" defaultValue={(sectionProps as any).title || ''} onChange={e => onUpdateField('title', e.target.value)} />
+              <textarea className="w-full border rounded px-2 py-1 text-xs" placeholder="Descripción" defaultValue={(sectionProps as any).description || ''} onChange={e => onUpdateField('description', e.target.value)} />
+              <div className="grid grid-cols-2 gap-2">
+                <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente título" defaultValue={(sectionProps as any).titleFont || ''} onChange={e => onUpdateField('titleFont', e.target.value)} />
+                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color título" defaultValue={(sectionProps as any).titleColor || ''} onChange={e => onUpdateField('titleColor', sanitizeHex(e.target.value))} />
+                <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente texto" defaultValue={(sectionProps as any).textFont || ''} onChange={e => onUpdateField('textFont', e.target.value)} />
+                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color texto" defaultValue={(sectionProps as any).textColor || ''} onChange={e => onUpdateField('textColor', sanitizeHex(e.target.value))} />
+              </div>
+            </div>
+          )}
           {section.type === 'about' && (
             <div className="space-y-2">
               <input className="w-full border rounded px-2 py-1 text-xs" placeholder="Título" defaultValue={(sectionProps as any).title || ''} onChange={e => onUpdateField('title', e.target.value)} />

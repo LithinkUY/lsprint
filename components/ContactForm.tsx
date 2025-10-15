@@ -38,7 +38,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ section, contactInfo, editMod
       <div className="text-center mb-10">
         <h2
           className="text-4xl font-bold"
-          style={{ fontFamily: 'var(--heading-font)' }}
+          style={{ fontFamily: section.titleFont || 'var(--heading-font)', color: section.titleColor || undefined }}
           contentEditable={!!editMode}
           suppressContentEditableWarning
           onBlur={(e) => onUpdateField?.('title', e.currentTarget.innerText)}
@@ -46,15 +46,15 @@ const ContactForm: React.FC<ContactFormProps> = ({ section, contactInfo, editMod
           {section.title}
         </h2>
         <div className="w-24 h-1 bg-[var(--primary-color)] mx-auto mt-4"></div>
-        {typeof section.description === 'string' && (
+        {(editMode || typeof section.description === 'string') && (
           <p
-            className="mt-4 text-gray-600 max-w-2xl mx-auto"
-            style={{ fontFamily: 'var(--body-font)' }}
+            className="mt-4 max-w-2xl mx-auto"
+            style={{ fontFamily: section.textFont || 'var(--body-font)', color: section.textColor || '#6b7280' }}
             contentEditable={!!editMode}
             suppressContentEditableWarning
             onBlur={(e) => onUpdateField?.('description', e.currentTarget.innerText)}
           >
-            {section.description}
+            {section.description || 'Escribe aquí una breve descripción de contacto...'}
           </p>
         )}
       </div>

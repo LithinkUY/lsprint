@@ -394,6 +394,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
           <div>
             <FormField id="c-t" label="Título" value={contactContent.title} onChange={e => updateField('title', e.target.value)} />
             <FormField id="c-desc" label="Descripción (bajo el título)" as="textarea" value={contactContent.description || ''} onChange={e => updateField('description', e.target.value)} />
+            <div className="flex gap-2 mb-2">
+              <FormField id="c-title-font" label="Fuente Título" value={contactContent.titleFont || ''} onChange={e => updateField('titleFont', e.target.value)} />
+              <FormField id="c-title-color" label="Color Título" value={contactContent.titleColor || ''} onChange={e => updateField('titleColor', e.target.value)} />
+            </div>
+            <div className="flex gap-2 mb-2">
+              <FormField id="c-text-font" label="Fuente Texto" value={contactContent.textFont || ''} onChange={e => updateField('textFont', e.target.value)} />
+              <FormField id="c-text-color" label="Color Texto" value={contactContent.textColor || ''} onChange={e => updateField('textColor', e.target.value)} />
+            </div>
             <FormField id="c-recipient" label="Email de destino (recibe mensajes)" value={contactContent.recipientEmail || ''} onChange={e => updateField('recipientEmail', e.target.value)} />
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Ancho del formulario (desktop)</label>

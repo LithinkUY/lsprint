@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      // Use the repository name as base when building for GitHub Pages
+      base: mode === 'production' ? '/lsprint/' : '/',
       server: {
         port: 3000,
         host: '0.0.0.0',

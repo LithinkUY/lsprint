@@ -28,3 +28,11 @@ View your app in AI Studio: https://ai.studio/apps/drive/1nhRZofzGzrxWNVE17BJrVi
 This repo auto-deploys to GitHub Pages on each push to `master` using the workflow in `.github/workflows/deploy.yml`. The Vite base path is configured to `/lsprint/` for Pages.
 
 If needed, trigger a manual deploy from the Actions tab: "Deploy to GitHub Pages" → Run workflow.
+
+### Custom domain (optional)
+
+To use a custom domain (e.g., `tudominio.com`):
+
+- Set a repo Variable (Settings → Secrets and variables → Variables) named `CUSTOM_DOMAIN` with your domain name. The workflow will generate `dist/CNAME` automatically. Alternatively, you can add a `CNAME` file in the repo root.
+- DNS: create a CNAME record pointing your subdomain (e.g. `www`) to `lithinkuy.github.io`. For apex domains, use ALIAS/ANAME if your DNS supports it, or A records to GitHub Pages IPs (see GitHub docs).
+- After DNS propagates and a new deploy runs, GitHub Pages will issue HTTPS automatically.

@@ -34,6 +34,16 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Custom domain (CNAME)
+        run: |
+          if [ -n "${{ vars.CUSTOM_DOMAIN }}" ]; then
+            echo "${{ vars.CUSTOM_DOMAIN }}" > dist/CNAME
+          elif [ -n "${{ secrets.CUSTOM_DOMAIN }}" ]; then
+            echo "${{ secrets.CUSTOM_DOMAIN }}" > dist/CNAME
+          elif [ -f CNAME ]; then
+            cp CNAME dist/CNAME
+          fi
+
       - name: SPA fallback (copy index.html to 404.html)
         run: cp dist/index.html dist/404.html
 

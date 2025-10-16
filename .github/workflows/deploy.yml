@@ -28,6 +28,19 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Prepare CUSTOM_DOMAIN env
+        env:
+          GH_VAR_CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+          GH_SEC_CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
+        run: |
+          if [ -n "$GH_VAR_CUSTOM_DOMAIN" ]; then
+            echo "CUSTOM_DOMAIN=$GH_VAR_CUSTOM_DOMAIN" >> $GITHUB_ENV
+          elif [ -n "$GH_SEC_CUSTOM_DOMAIN" ]; then
+            echo "CUSTOM_DOMAIN=$GH_SEC_CUSTOM_DOMAIN" >> $GITHUB_ENV
+          elif [ -f CNAME ]; then
+            echo "CUSTOM_DOMAIN=$(cat CNAME)" >> $GITHUB_ENV
+          fi
+
       - name: Install dependencies
         run: npm install
 

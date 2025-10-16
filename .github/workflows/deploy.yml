@@ -47,6 +47,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
       - name: Custom domain (CNAME)
         run: |
           if [ -n "${{ vars.CUSTOM_DOMAIN }}" ]; then

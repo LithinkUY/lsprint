@@ -197,6 +197,105 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
     };
 
     switch (section.type) {
+      case 'columns': {
+        const colsContent = content as any as { columns: { id: string; width?: number; sections: Section[] }[] };
+        const setColumns = (cols: { id: string; width?: number; sections: Section[] }[]) => updateField('columns', cols);
+        const addColumn = () => {
+          const newCols = [...colsContent.columns, { id: uuidv4(), width: 0.5, sections: [] }];
+          // Normalize widths to sum ~1
+          const per = 1 / newCols.length;
+          setColumns(newCols.map(c => ({ ...c, width: per })));
+        };
+        const removeColumn = (colId: string) => {
+          if (colsContent.columns.length <= 2) { alert('Debe haber al menos 2 columnas'); return; }
+          const newCols = colsContent.columns.filter(c => c.id !== colId);
+          const per = 1 / newCols.length;
+          setColumns(newCols.map(c => ({ ...c, width: per })));
+        };
+        const updateWidth = (colId: string, percent: number) => {
+          const newCols = colsContent.columns.map(c => c.id === colId ? { ...c, width: Math.max(0.2, Math.min(0.8, percent)) } : c);
+          setColumns(newCols);
+        };
+        const addSectionToCol = (colId: string, type: SectionType) => {
+          const newCols = colsContent.columns.map(c => c.id === colId ? { ...c, sections: [...c.sections, createNewSectionOfType(type)] } : c);
+          setColumns(newCols);
+        };
+        const deleteSectionInCol = (colId: string, sectionId: string) => {
+          const newCols = colsContent.columns.map(c => c.id === colId ? { ...c, sections: c.sections.filter(s => s.id !== sectionId) } : c);
+          setColumns(newCols);
+        };
+        const moveSectionInCol = (colId: string, fromIdx: number, toIdx: number) => {
+          const newCols = colsContent.columns.map(c => {
+            if (c.id !== colId) return c;
+            const list = [...c.sections];
+            const [m] = list.splice(fromIdx, 1);
+            list.splice(toIdx, 0, m);
+            return { ...c, sections: list };
+          });
+          setColumns(newCols);
+        };
+        const moveSectionToNeighborCol = (fromColId: string, idx: number, dir: -1 | 1) => {
+          const colIndex = colsContent.columns.findIndex(c => c.id === fromColId);
+          const toIndex = colIndex + dir;
+          if (toIndex < 0 || toIndex >= colsContent.columns.length) return;
+          const fromCol = colsContent.columns[colIndex];
+          const toCol = colsContent.columns[toIndex];
+          const moving = fromCol.sections[idx];
+          const newFrom = { ...fromCol, sections: fromCol.sections.filter((_, i) => i !== idx) };
+          const newTo = { ...toCol, sections: [...toCol.sections, moving] };
+          const newCols = colsContent.columns.map((c, i) => i === colIndex ? newFrom : i === toIndex ? newTo : c);
+          setColumns(newCols);
+        };
+        const total = colsContent.columns.reduce((acc, c) => acc + (c.width || 1), 0);
+        return (
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="text-sm text-gray-600">Columnas: {colsContent.columns.length}</span>
+              <button onClick={addColumn} className="text-sm bg-blue-500 text-white py-1 px-2 rounded">Añadir Columna</button>
+            </div>
+            {colsContent.columns.map((col, cidx) => (
+              <div key={col.id} className="border rounded p-2 mb-3">
+                <div className="flex items-center gap-2 justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-600">Ancho</span>
+                    <input type="range" min={20} max={80} value={Math.round((col.width ?? 0.5) * 100)} onChange={e => updateWidth(col.id, Number(e.target.value)/100)} />
+                    <span className="text-xs text-gray-500">{Math.round((col.width ?? 0.5) * 100)}%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => removeColumn(col.id)} className="text-xs text-red-600">Eliminar Columna</button>
+                    <details className="relative">
+                      <summary className="text-xs bg-blue-500 text-white px-2 py-1 rounded cursor-pointer select-none">+ Sección</summary>
+                      <div className="absolute z-50 mt-1 bg-white border shadow rounded p-2 grid grid-cols-2 gap-2 w-56">
+                        {(['text','image','html','about','services','products','map','contact'] as SectionType[]).map(t => (
+                          <button key={t} className="text-xs bg-gray-100 hover:bg-gray-200 rounded px-2 py-1 text-left" onClick={() => addSectionToCol(col.id, t)}>{t}</button>
+                        ))}
+                      </div>
+                    </details>
+                  </div>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {col.sections.length === 0 && (
+                    <div className="text-gray-400 text-sm">Columna vacía</div>
+                  )}
+                  {col.sections.map((s, idx) => (
+                    <div key={s.id} className="border rounded p-2 flex items-center justify-between">
+                      <div className="text-sm">{s.type}</div>
+                      <div className="flex items-center gap-1">
+                        <button className="text-[10px] bg-gray-100 border rounded px-1 py-0.5" disabled={idx===0} onClick={() => moveSectionInCol(col.id, idx, Math.max(0, idx-1))}>↑</button>
+                        <button className="text-[10px] bg-gray-100 border rounded px-1 py-0.5" disabled={idx===col.sections.length-1} onClick={() => moveSectionInCol(col.id, idx, Math.min(col.sections.length-1, idx+1))}>↓</button>
+                        <button className="text-[10px] bg-gray-100 border rounded px-1 py-0.5" disabled={cidx===0} onClick={() => moveSectionToNeighborCol(col.id, idx, -1)}>⟵</button>
+                        <button className="text-[10px] bg-gray-100 border rounded px-1 py-0.5" disabled={cidx===colsContent.columns.length-1} onClick={() => moveSectionToNeighborCol(col.id, idx, 1)}>⟶</button>
+                        <button className="text-[10px] bg-red-500 text-white rounded px-1 py-0.5" onClick={() => deleteSectionInCol(col.id, s.id)}>✕</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div className="text-xs text-gray-500">Ancho total: {Math.round(total * 100)} (normalizado en CSS)</div>
+          </div>
+        );
+      }
       case 'hero': {
         const heroContent = content as HeroSection;
         return (
@@ -553,7 +652,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
 
   const selectedPage = draftData.pages.find(p => p.id === selectedPageId);
   const selectedPageIndex = draftData.pages.findIndex(p => p.id === selectedPageId);
-  const sectionTypes: SectionType[] = ['hero', 'services', 'products', 'about', 'map', 'contact', 'text', 'image', 'html', 'estilos'];
+  const sectionTypes: SectionType[] = ['hero', 'services', 'products', 'about', 'map', 'contact', 'text', 'image', 'html', 'columns', 'estilos'];
 
   return (
     <div className="flex h-screen bg-gray-100">

@@ -8,7 +8,10 @@ interface ServicesProps {
     titleColor?: string;
     textFont?: string;
     textColor?: string;
+  showTitle?: boolean;
+  showUnderline?: boolean;
   editMode?: boolean;
+  compact?: boolean;
   onUpdateField?: (field: string, value: any) => void;
 }
 
@@ -18,20 +21,24 @@ const WhatsappIcon = () => (
     </svg>
 )
 
-const Services: React.FC<ServicesProps> = ({ title, services, titleFont, titleColor, textFont, textColor, editMode, onUpdateField }) => {
+const Services: React.FC<ServicesProps> = ({ title, services, titleFont, titleColor, textFont, textColor, editMode, onUpdateField, showTitle = true, showUnderline = true, compact }) => {
   return (
-    <section id="services" className="py-20">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-12">
-          <h2
-            className="text-4xl font-bold"
-            style={{fontFamily: titleFont || 'var(--heading-font)', color: titleColor || undefined}}
-            contentEditable={!!editMode}
-            suppressContentEditableWarning
-            onBlur={(e) => onUpdateField?.('title', e.currentTarget.innerText)}
-          >{title}</h2>
-          <div className="w-24 h-1 bg-[var(--primary-color)] mx-auto mt-4"></div>
-        </div>
+    <section id="services" className={compact ? 'py-6' : 'py-20'}>
+      <div className={compact ? '' : 'container mx-auto px-6'}>
+        {(showTitle || editMode) && (
+          <div className={compact ? 'text-center mb-6' : 'text-center mb-12'}>
+            {showTitle && (
+              <h2
+                className="text-4xl font-bold"
+                style={{fontFamily: titleFont || 'var(--heading-font)', color: titleColor || undefined}}
+                contentEditable={!!editMode}
+                suppressContentEditableWarning
+                onBlur={(e) => onUpdateField?.('title', e.currentTarget.innerText)}
+              >{title}</h2>
+            )}
+            {showUnderline && <div className="w-24 h-1 bg-[var(--primary-color)] mx-auto mt-4"></div>}
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service) => (
             <div key={service.id} className="bg-white p-8 rounded-lg shadow-lg text-center transform hover:-translate-y-2 transition-transform duration-300 relative">

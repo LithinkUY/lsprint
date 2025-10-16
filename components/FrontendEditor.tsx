@@ -8,7 +8,7 @@ interface FrontendEditorProps {
   onAddSection: (type: SectionType) => void;
 }
 
-const AVAILABLE_TYPES: SectionType[] = ['hero','services','products','about','map','contact','text','image','html'];
+const AVAILABLE_TYPES: SectionType[] = ['hero','services','products','about','map','contact','text','image','html','columns'];
 
 const FrontendEditor: React.FC<FrontendEditorProps> = ({ isAdmin, editMode, setEditMode, onAddSection }) => {
   const [open, setOpen] = useState(false);

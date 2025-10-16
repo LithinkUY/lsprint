@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { ImageSection as ImageSectionType } from '../types';
 
-const ImageSection: React.FC<ImageSectionType> = ({ title, images, displayMode }) => {
+type Props = ImageSectionType & { editMode?: boolean; onUpdateField?: (field: string, value: any) => void; titleFont?: string; titleColor?: string; textFont?: string; textColor?: string; compact?: boolean };
+
+const ImageSection: React.FC<Props> = ({ title, images, displayMode, editMode, onUpdateField, titleFont, titleColor, showTitle = true, showUnderline = true, compact }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const goToNext = () => {
@@ -41,12 +43,22 @@ const ImageSection: React.FC<ImageSectionType> = ({ title, images, displayMode }
 
 
   return (
-    <section className="py-20">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold" style={{fontFamily: 'var(--heading-font)'}}>{title}</h2>
-            <div className="w-24 h-1 bg-[var(--primary-color)] mx-auto mt-4"></div>
-        </div>
+    <section className={compact ? 'py-6' : 'py-20'}>
+      <div className={compact ? '' : 'container mx-auto px-6'}>
+        {(showTitle || editMode) && (
+          <div className={compact ? 'text-center mb-6' : 'text-center mb-12'}>
+            {showTitle && (
+              <h2
+                className="text-4xl font-bold"
+                style={{fontFamily: titleFont || 'var(--heading-font)', color: titleColor || undefined}}
+                contentEditable={!!editMode}
+                suppressContentEditableWarning
+                onBlur={(e) => onUpdateField?.('title', e.currentTarget.innerText)}
+              >{title}</h2>
+            )}
+            {showUnderline && <div className="w-24 h-1 bg-[var(--primary-color)] mx-auto mt-4"></div>}
+          </div>
+        )}
         {displayMode === 'slider' ? renderSlider() : renderGrid()}
       </div>
     </section>

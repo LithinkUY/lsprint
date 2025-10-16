@@ -48,6 +48,7 @@ const DynamicStyle: React.FC<DynamicStyleProps> = ({ globalStyles, headerStyles,
       --footer-font: ${headerMenuFooterStyles?.footerFont || 'inherit'};
       --footer-title-color: ${headerMenuFooterStyles?.footerColor || 'inherit'};
     }
+    body { background-color: var(--background-color); color: var(--body-color); font-family: var(--body-font); }
   `;
   return <style>{css}</style>;
 };

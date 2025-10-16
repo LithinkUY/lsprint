@@ -31,7 +31,7 @@ export interface HeaderMenuFooterStyles {
 import { v4 as uuidv4 } from 'uuid';
 
 // Tipos básicos
-export type SectionType = 'hero' | 'slides' | 'services' | 'products' | 'about' | 'map' | 'contact' | 'text' | 'image' | 'images' | 'html' | 'estilos';
+export type SectionType = 'hero' | 'slides' | 'services' | 'products' | 'about' | 'map' | 'contact' | 'text' | 'image' | 'images' | 'html' | 'logos' | 'estilos' | 'columns';
 export interface EstilosSection {
   titleFont?: string;
   titleColor?: string;
@@ -71,6 +71,14 @@ export interface ImageItem {
   url: string;
 }
 
+// Logos de clientes
+export interface ClientLogo {
+  id: string;
+  url: string;
+  link?: string;
+  alt?: string;
+}
+
 // Interfaces para el contenido de cada tipo de sección
 export interface HeroSection {
   slides: HeroSlide[];
@@ -83,6 +91,9 @@ export interface ServicesSection {
   titleColor?: string;
   textFont?: string;
   textColor?: string;
+  // Visibilidad
+  showTitle?: boolean;
+  showUnderline?: boolean;
 }
 
 export interface ProductsSection {
@@ -92,6 +103,9 @@ export interface ProductsSection {
   titleColor?: string;
   textFont?: string;
   textColor?: string;
+  // Visibilidad
+  showTitle?: boolean;
+  showUnderline?: boolean;
 }
 
 export interface AboutSection {
@@ -104,6 +118,10 @@ export interface AboutSection {
   titleColor?: string;
   textFont?: string;
   textColor?: string;
+  // Visibilidad
+  showTitle?: boolean;
+  showUnderline?: boolean;
+  showSubtitle?: boolean;
 }
 
 export interface MapSection {
@@ -111,6 +129,9 @@ export interface MapSection {
   embedUrl: string;
   titleFont?: string;
   titleColor?: string;
+  // Visibilidad
+  showTitle?: boolean;
+  showUnderline?: boolean;
 }
 
 export interface ContactFormField {
@@ -138,6 +159,10 @@ export interface ContactSection {
   titleColor?: string;
   textFont?: string;
   textColor?: string;
+  // Visibilidad
+  showTitle?: boolean;
+  showUnderline?: boolean;
+  showDescription?: boolean;
 }
 
 export interface TextSection {
@@ -147,23 +172,58 @@ export interface TextSection {
   titleColor?: string;
   textFont?: string;
   textColor?: string;
+  // Visibilidad
+  showTitle?: boolean;
+  showUnderline?: boolean;
 }
 
 export interface ImageSection {
   title: string;
   displayMode: 'grid' | 'slider';
   images: ImageItem[];
+  // Estilos opcionales para el título de la galería
+  titleFont?: string;
+  titleColor?: string;
+  // Visibilidad
+  showTitle?: boolean;
+  showUnderline?: boolean;
+}
+
+export interface ClientLogosSection {
+  title?: string;
+  logos: ClientLogo[];
+  autoplay?: boolean;
+  speedMs?: number; // intervalo de auto-scroll
+  // Estilos/toggles de cabecera
+  titleFont?: string;
+  titleColor?: string;
+  showTitle?: boolean;
+  showUnderline?: boolean;
 }
 
 export interface HtmlSection {
   htmlContent: string;
+  // Estilos opcionales aplicados al bloque HTML
+  textFont?: string;
+  textColor?: string;
+}
+
+export interface Column {
+  id: string;
+  // ancho relativo 0-1, opcional. Si no hay, se reparte equitativo
+  width?: number;
+  sections: Section[];
+}
+
+export interface ColumnsSection {
+  columns: Column[]; // mínimo 2
 }
 
 // Interface genérica para una sección
 export interface Section {
   id: string;
   type: SectionType;
-  content: HeroSection | ServicesSection | ProductsSection | AboutSection | MapSection | ContactSection | TextSection | ImageSection | HtmlSection | EstilosSection;
+  content: HeroSection | ServicesSection | ProductsSection | AboutSection | MapSection | ContactSection | TextSection | ImageSection | HtmlSection | ClientLogosSection | EstilosSection | ColumnsSection;
 }
 
 // Interface para una página
@@ -261,13 +321,13 @@ export const createNewSectionOfType = (type: SectionType): Section => {
     case 'hero':
       return { id: uuidv4(), type, content: { slides: [createNewSlide()] } };
     case 'services':
-      return { id: uuidv4(), type, content: { title: '', services: [createNewService()] } };
+      return { id: uuidv4(), type, content: { title: '', services: [createNewService()], showTitle: true, showUnderline: true } };
     case 'products':
-      return { id: uuidv4(), type, content: { title: '', products: [createNewProduct()] } };
+      return { id: uuidv4(), type, content: { title: '', products: [createNewProduct()], showTitle: true, showUnderline: true } };
     case 'about':
-      return { id: uuidv4(), type, content: { title: '', subtitle: '', content: '', imageUrl: '', button: { text: '', link: '' } } };
+      return { id: uuidv4(), type, content: { title: '', subtitle: '', content: '', imageUrl: '', button: { text: '', link: '' }, showTitle: true, showUnderline: true, showSubtitle: true } };
     case 'map':
-      return { id: uuidv4(), type, content: { title: '', embedUrl: '' } };
+      return { id: uuidv4(), type, content: { title: '', embedUrl: '', showTitle: true, showUnderline: true } };
     case 'contact':
       return {
         id: uuidv4(),
@@ -284,14 +344,45 @@ export const createNewSectionOfType = (type: SectionType): Section => {
           errorMessage: 'Hubo un error. Intenta de nuevo.',
           recipientEmail: '',
           formWidth: 0.6,
+          showTitle: true,
+          showUnderline: true,
+          showDescription: true,
         }
       };
     case 'text':
-      return { id: uuidv4(), type, content: { title: '', content: '' } };
+      return { id: uuidv4(), type, content: { title: '', content: '', showTitle: true, showUnderline: true } };
     case 'image':
-      return { id: uuidv4(), type, content: { title: '', displayMode: 'grid', images: [{ id: uuidv4(), url: 'https://via.placeholder.com/600x400' }] } };
+      return { id: uuidv4(), type, content: { title: '', displayMode: 'grid', images: [{ id: uuidv4(), url: 'https://via.placeholder.com/600x400' }], showTitle: true, showUnderline: true } };
     case 'html':
       return { id: uuidv4(), type, content: { htmlContent: '' } };
+    case 'logos':
+      return {
+        id: uuidv4(),
+        type,
+        content: {
+          title: 'Clientes',
+          logos: [
+            { id: uuidv4(), url: 'https://via.placeholder.com/160x80?text=Logo+1' },
+            { id: uuidv4(), url: 'https://via.placeholder.com/160x80?text=Logo+2' },
+            { id: uuidv4(), url: 'https://via.placeholder.com/160x80?text=Logo+3' },
+          ],
+          autoplay: true,
+          speedMs: 2500,
+          showTitle: true,
+          showUnderline: true,
+        },
+      };
+    case 'columns':
+      return {
+        id: uuidv4(),
+        type,
+        content: {
+          columns: [
+            { id: uuidv4(), width: 0.5, sections: [] },
+            { id: uuidv4(), width: 0.5, sections: [] },
+          ],
+        },
+      };
     default:
       throw new Error(`Tipo de sección no soportado: ${type}`);
   }

@@ -8,7 +8,10 @@ interface ProductsProps {
   titleColor?: string;
   textFont?: string;
   textColor?: string;
+  showTitle?: boolean;
+  showUnderline?: boolean;
   editMode?: boolean;
+  compact?: boolean;
   onUpdateField?: (field: string, value: any) => void;
 }
 
@@ -18,7 +21,7 @@ const WhatsappIcon = () => (
     </svg>
 )
 
-const Products: React.FC<ProductsProps> = ({ title, products, titleFont, titleColor, textFont, textColor, editMode, onUpdateField }) => {
+const Products: React.FC<ProductsProps> = ({ title, products, titleFont, titleColor, textFont, textColor, editMode, onUpdateField, showTitle = true, showUnderline = true, compact }) => {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
 
   const categories = useMemo(() => ['Todos', ...Array.from(new Set(products.map(p => p.category)))], [products]);
@@ -31,18 +34,22 @@ const Products: React.FC<ProductsProps> = ({ title, products, titleFont, titleCo
   }, [products, selectedCategory]);
 
   return (
-    <section id="products" className="py-20">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-12">
-          <h2
-            className="text-4xl font-bold"
-            style={{fontFamily: titleFont || 'var(--heading-font)', color: titleColor || undefined}}
-            contentEditable={!!editMode}
-            suppressContentEditableWarning
-            onBlur={(e) => onUpdateField?.('title', e.currentTarget.innerText)}
-          >{title}</h2>
-          <div className="w-24 h-1 bg-[var(--primary-color)] mx-auto mt-4"></div>
-        </div>
+    <section id="products" className={compact ? 'py-6' : 'py-20'}>
+      <div className={compact ? '' : 'container mx-auto px-6'}>
+        {(showTitle || editMode) && (
+          <div className={compact ? 'text-center mb-6' : 'text-center mb-12'}>
+            {showTitle && (
+              <h2
+                className="text-4xl font-bold"
+                style={{fontFamily: titleFont || 'var(--heading-font)', color: titleColor || undefined}}
+                contentEditable={!!editMode}
+                suppressContentEditableWarning
+                onBlur={(e) => onUpdateField?.('title', e.currentTarget.innerText)}
+              >{title}</h2>
+            )}
+            {showUnderline && <div className="w-24 h-1 bg-[var(--primary-color)] mx-auto mt-4"></div>}
+          </div>
+        )}
         <div className="flex justify-center mb-8 space-x-2 md:space-x-4">
           {categories.map(category => (
             <button

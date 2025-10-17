@@ -142,9 +142,9 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
               <textarea className="w-full border rounded px-2 py-1 text-xs" placeholder="Contenido" defaultValue={(sectionProps as any).content || ''} onChange={e => onUpdateField('content', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente título" defaultValue={(sectionProps as any).titleFont || ''} onChange={e => onUpdateField('titleFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color título" defaultValue={(sectionProps as any).titleColor || ''} onChange={e => onUpdateField('titleColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color título" defaultValue={(sectionProps as any).titleColor || '#000000'} onChange={e => onUpdateField('titleColor', e.target.value)} />
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente texto" defaultValue={(sectionProps as any).textFont || ''} onChange={e => onUpdateField('textFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color texto" defaultValue={(sectionProps as any).textColor || ''} onChange={e => onUpdateField('textColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color texto" defaultValue={(sectionProps as any).textColor || '#000000'} onChange={e => onUpdateField('textColor', e.target.value)} />
               </div>
               <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" defaultChecked={(sectionProps as any).showTitle !== false} onChange={e => onUpdateField('showTitle', e.target.checked)} /> Mostrar título</label>
               <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" defaultChecked={(sectionProps as any).showUnderline !== false} onChange={e => onUpdateField('showUnderline', e.target.checked)} /> Subrayado</label>

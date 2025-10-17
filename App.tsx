@@ -105,6 +105,60 @@ const App: React.FC = () => {
   const currentPage = siteData.pages.find(p => p.path === currentPath) || siteData.pages[0];
   const waPhone = (siteData.whatsapp?.phone || '').replace(/[^0-9]/g, '');
 
+  // Export/Import/Reset helpers for frontend editor
+  const handleExport = () => {
+    try {
+      const dataStr = JSON.stringify(siteData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const date = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+      a.download = `site-data-${date}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('No se pudo exportar el contenido');
+    }
+  };
+
+  const handleImport = (data: any) => {
+    try {
+      if (!data || !Array.isArray(data.pages)) throw new Error('Formato inválido: falta pages');
+      // Migraciones mínimas como en el init
+      if (!data.whatsapp) data.whatsapp = { phone: '', message: '¡Hola! Quiero más información.', enabled: true } as any;
+      data.pages.forEach((page: any) => {
+        page.sections?.forEach((section: any) => {
+          if (section.type === 'products' && Array.isArray(section.content.products)) {
+            section.content.products.forEach((product: any) => {
+              if (typeof product.icon === 'undefined') product.icon = '';
+            });
+          }
+          if (section.type === 'services' && Array.isArray(section.content.services)) {
+            section.content.services.forEach((service: any) => {
+              if (typeof service.icon === 'undefined') service.icon = '';
+            });
+          }
+          if (section.type === 'contact' && Array.isArray(section.content.fields)) {
+            section.content.fields.forEach((field: any) => {
+              if (typeof field.icon === 'undefined') field.icon = '';
+            });
+          }
+        });
+      });
+      setSiteData(data as SiteData);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      alert('El JSON importado no es válido.');
+    }
+  };
+
+  const handleReset = () => {
+    if (!confirm('Esto restablecerá todo el contenido a los valores iniciales. ¿Continuar?')) return;
+    setSiteData(INITIAL_SITE_DATA);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_SITE_DATA));
+  };
+
   const onDragEnd = (result: DropResult) => {
     if (!isAdmin || !editMode) return;
     const { destination, source } = result;
@@ -286,6 +340,9 @@ const App: React.FC = () => {
           isAdmin={isAdmin}
           editMode={editMode}
           setEditMode={setEditMode}
+          onExport={handleExport}
+          onImport={handleImport}
+          onReset={handleReset}
           onAddSection={(type: SectionType) => {
             if (!isAdmin) return;
             const newSection = createNewSectionOfType(type);

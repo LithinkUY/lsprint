@@ -6,6 +6,7 @@ export const INITIAL_SITE_DATA: SiteData = {
     logoTextPart1: 'GB',
     logoTextPart2: 'PRINT',
     logoImageUrl: '',
+    logoHeightPx: 40,
   },
   globalStyles: {
     primaryColor: '#3b82f6',

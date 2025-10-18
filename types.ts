@@ -19,11 +19,27 @@ export interface SocialIcon {
   url: string;
   iconSvg: string; // SVG string
 }
+// Estilo por item de menú/página
+export interface MenuItemStyle {
+  color?: string;
+  underline?: boolean;
+  hoverUnderline?: boolean;
+  underlineColor?: string;
+  underlineThickness?: number; // px
+  underlineStyle?: 'solid' | 'dashed' | 'dotted';
+}
 export interface HeaderMenuFooterStyles {
   headerFont?: string;
   headerColor?: string;
   menuFont?: string;
   menuColor?: string;
+  // Subrayado del menú
+  menuUnderline?: boolean;
+  menuHoverUnderline?: boolean;
+  // Ajustes avanzados del subrayado del menú
+  menuUnderlineColor?: string;
+  menuUnderlineThickness?: number; // en px
+  menuUnderlineStyle?: 'solid' | 'dashed' | 'dotted';
   footerFont?: string;
   footerColor?: string;
 }
@@ -31,7 +47,7 @@ export interface HeaderMenuFooterStyles {
 import { v4 as uuidv4 } from 'uuid';
 
 // Tipos básicos
-export type SectionType = 'hero' | 'slides' | 'services' | 'products' | 'about' | 'map' | 'contact' | 'text' | 'image' | 'images' | 'html' | 'logos' | 'estilos' | 'columns';
+export type SectionType = 'hero' | 'slides' | 'services' | 'products' | 'about' | 'map' | 'contact' | 'text' | 'image' | 'images' | 'html' | 'logos' | 'estilos' | 'columns' | 'menuStyles';
 export interface EstilosSection {
   titleFont?: string;
   titleColor?: string;
@@ -181,6 +197,17 @@ export interface ImageSection {
   title: string;
   displayMode: 'grid' | 'slider';
   images: ImageItem[];
+  // Cantidad de columnas visibles en modo slider (desktop)
+  sliderColumns?: number;
+  // Autoplay y velocidad (ms)
+  sliderAutoplay?: boolean;
+  sliderSpeedMs?: number;
+  // Tamaño del paso de avance: 1 en 1 o por columnas visibles
+  sliderStep?: '1' | 'columns';
+  // Pausar autoplay al pasar el mouse
+  sliderPauseOnHover?: boolean;
+  // Reducir columnas automáticamente en móvil/tablet
+  sliderResponsive?: boolean;
   // Estilos opcionales para el título de la galería
   titleFont?: string;
   titleColor?: string;
@@ -232,6 +259,8 @@ export interface Page {
   name: string;
   path: string;
   sections: Section[];
+  // Overrides de estilo del ítem del menú (opcional)
+  menuStyle?: MenuItemStyle;
 }
 
 // Interfaces para los estilos y la identidad del sitio
@@ -241,6 +270,13 @@ export interface HeaderMenuFooterStyles {
   headerColor?: string;
   menuFont?: string;
   menuColor?: string;
+  // Subrayado del menú
+  menuUnderline?: boolean;
+  menuHoverUnderline?: boolean;
+  // Ajustes avanzados del subrayado del menú
+  menuUnderlineColor?: string;
+  menuUnderlineThickness?: number; // en px
+  menuUnderlineStyle?: 'solid' | 'dashed' | 'dotted';
   footerFont?: string;
   footerColor?: string;
 }
@@ -248,6 +284,8 @@ export interface SiteIdentity {
   logoTextPart1: string;
   logoTextPart2: string;
   logoImageUrl: string;
+  // Alto del logo en el header (px)
+  logoHeightPx?: number;
 }
 
 export interface GlobalStyles {
@@ -352,7 +390,7 @@ export const createNewSectionOfType = (type: SectionType): Section => {
     case 'text':
       return { id: uuidv4(), type, content: { title: '', content: '', showTitle: true, showUnderline: true } };
     case 'image':
-      return { id: uuidv4(), type, content: { title: '', displayMode: 'grid', images: [{ id: uuidv4(), url: 'https://via.placeholder.com/600x400' }], showTitle: true, showUnderline: true } };
+      return { id: uuidv4(), type, content: { title: '', displayMode: 'grid', images: [{ id: uuidv4(), url: 'https://via.placeholder.com/600x400' }], sliderColumns: 3, sliderAutoplay: false, sliderSpeedMs: 5000, sliderStep: '1', sliderPauseOnHover: true, sliderResponsive: true, showTitle: true, showUnderline: true } };
     case 'html':
       return { id: uuidv4(), type, content: { htmlContent: '' } };
     case 'logos':
@@ -383,6 +421,13 @@ export const createNewSectionOfType = (type: SectionType): Section => {
           ],
         },
       };
+    case 'menuStyles':
+      // Sección invisible para editar estilos globales del menú
+      return {
+        id: uuidv4(),
+        type,
+        content: {},
+      } as unknown as Section;
     default:
       throw new Error(`Tipo de sección no soportado: ${type}`);
   }

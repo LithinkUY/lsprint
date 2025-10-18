@@ -11,6 +11,7 @@ import { createNewSectionOfType, SectionType } from './types';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 const LOCAL_STORAGE_KEY = 'dynamic-site-data';
+const BUILD_KEY = 'app-build-id';
 
 const App: React.FC = () => {
   const [siteData, setSiteData] = useState<SiteData>(() => {
@@ -65,6 +66,11 @@ const App: React.FC = () => {
           }
         });
       });
+      // MIGRACIÓN: asegurar alto de logo por defecto si falta
+      if (!parsed.siteIdentity) parsed.siteIdentity = INITIAL_SITE_DATA.siteIdentity as any;
+      if (typeof parsed.siteIdentity.logoHeightPx !== 'number') {
+        parsed.siteIdentity.logoHeightPx = 40;
+      }
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
       return parsed;
     } catch (error) {
@@ -89,6 +95,35 @@ const App: React.FC = () => {
       console.error("Error saving data to localStorage", error);
     }
   }, [siteData]);
+
+  // Detectar despliegue nuevo y ofrecer limpiar datos locales
+  useEffect(() => {
+    try {
+      const currentBuild = (globalThis as any).__APP_BUILD__ || 'dev';
+      const storedBuild = localStorage.getItem(BUILD_KEY);
+      if (storedBuild && storedBuild !== currentBuild) {
+        // Si NO es admin, limpiar automáticamente sin preguntar
+        if (!isAdmin) {
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
+          localStorage.setItem(BUILD_KEY, String(currentBuild));
+          window.location.reload();
+          return;
+        } else {
+          // Admin: ofrecer mantener sus cambios locales
+          const shouldClear = confirm('Hay una actualización del sitio disponible. ¿Deseas cargar el contenido publicado más reciente y limpiar tus datos locales?');
+          if (shouldClear) {
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            localStorage.setItem(BUILD_KEY, String(currentBuild));
+            window.location.reload();
+            return;
+          }
+        }
+      }
+      if (!storedBuild) {
+        localStorage.setItem(BUILD_KEY, String(currentBuild));
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     const onLocationChange = () => {
@@ -199,12 +234,25 @@ const App: React.FC = () => {
         <main>
           {!isAdmin || !editMode ? (
             currentPage?.sections
-              .filter(section => section.type !== 'estilos')
+              .filter(section => section.type !== 'estilos' && section.type !== 'menuStyles')
               .map((section, idx) => (
                 <SectionRenderer
                   key={section.id}
                   section={section}
                   contactInfo={siteData.contactInfo}
+                  headerMenuFooterStyles={siteData.headerMenuFooterStyles}
+                  pages={siteData.pages}
+                  onUpdateHeaderMenuFooterStyles={(patch) => {
+                    const updated = { ...siteData, headerMenuFooterStyles: { ...(siteData.headerMenuFooterStyles || {}), ...patch } };
+                    setSiteData(updated);
+                    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+                  }}
+                  onUpdatePageMenuStyle={(pageId, patch) => {
+                    const newPages = siteData.pages.map(p => p.id === pageId ? { ...p, menuStyle: { ...(p.menuStyle || {}), ...patch } } : p);
+                    const updated = { ...siteData, pages: newPages };
+                    setSiteData(updated);
+                    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+                  }}
                   onUpdateContactInfo={(field, value) => {
                     const updated = { ...siteData, contactInfo: { ...(siteData.contactInfo || {}), [field]: value } };
                     setSiteData(updated);
@@ -218,7 +266,7 @@ const App: React.FC = () => {
                 {(provided) => (
                   <div ref={provided.innerRef} {...provided.droppableProps}>
                     {currentPage?.sections
-                      .filter(section => section.type !== 'estilos')
+                      .filter(section => section.type !== 'estilos' && section.type !== 'menuStyles')
                       .map((section, idx) => (
                         <>
                           {/* React key en el fragmento para evitar error de tipos en Draggable */}
@@ -228,6 +276,19 @@ const App: React.FC = () => {
                                 <SectionRenderer
                                 section={section}
                                 contactInfo={siteData.contactInfo}
+                                headerMenuFooterStyles={siteData.headerMenuFooterStyles}
+                                pages={siteData.pages}
+                                onUpdateHeaderMenuFooterStyles={(patch) => {
+                                  const updated = { ...siteData, headerMenuFooterStyles: { ...(siteData.headerMenuFooterStyles || {}), ...patch } };
+                                  setSiteData(updated);
+                                  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+                                }}
+                                onUpdatePageMenuStyle={(pageId, patch) => {
+                                  const newPages = siteData.pages.map(p => p.id === pageId ? { ...p, menuStyle: { ...(p.menuStyle || {}), ...patch } } : p);
+                                  const updated = { ...siteData, pages: newPages };
+                                  setSiteData(updated);
+                                  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+                                }}
                                 editMode
                                 onUpdateContactInfo={(field, value) => {
                                   const updated = { ...siteData, contactInfo: { ...(siteData.contactInfo || {}), [field]: value } };
@@ -249,8 +310,8 @@ const App: React.FC = () => {
                                     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ ...siteData, pages: newPages }));
                                   }
                                 } : undefined}
-                                onMoveDown={idx < currentPage.sections.filter(s=>s.type!=='estilos').length - 1 ? () => {
-                                  const visible = currentPage.sections.filter(s => s.type !== 'estilos');
+                                onMoveDown={idx < currentPage.sections.filter(s=>s.type!=='estilos' && s.type!=='menuStyles').length - 1 ? () => {
+                                  const visible = currentPage.sections.filter(s => s.type !== 'estilos' && s.type !== 'menuStyles');
                                   const targetId = visible[idx].id;
                                   const nextId = visible[idx + 1].id;
                                   const newSections = [...currentPage.sections];
@@ -265,7 +326,7 @@ const App: React.FC = () => {
                                 } : undefined}
                                 onDelete={() => {
                                   if (!confirm('¿Eliminar esta sección?')) return;
-                                  const visible = currentPage.sections.filter(s=>s.type!=='estilos');
+                                  const visible = currentPage.sections.filter(s=>s.type!=='estilos' && s.type!=='menuStyles');
                                   const delId = visible[idx].id;
                                   const newSections = currentPage.sections.filter(s => s.id !== delId);
                                   const newPages = siteData.pages.map(p => p.id === currentPage.id ? { ...p, sections: newSections } : p);
@@ -273,7 +334,7 @@ const App: React.FC = () => {
                                   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ ...siteData, pages: newPages }));
                                 }}
                                 onUpdateField={(field, value) => {
-                                  const visible = currentPage.sections.filter(s=>s.type!=='estilos');
+                                  const visible = currentPage.sections.filter(s=>s.type!=='estilos' && s.type!=='menuStyles');
                                   const targetId = visible[idx].id;
                                   const newSections = currentPage.sections.map(s => s.id === targetId ? ({ ...s, content: { ...(s.content as any), [field]: value } }) : s);
                                   const newPages = siteData.pages.map(p => p.id === currentPage.id ? { ...p, sections: newSections } : p);
@@ -281,7 +342,7 @@ const App: React.FC = () => {
                                   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ ...siteData, pages: newPages }));
                                 }}
                                 onAddBefore={(type) => {
-                                  const visible = currentPage.sections.filter(s=>s.type!=='estilos');
+                                  const visible = currentPage.sections.filter(s=>s.type!=='estilos' && s.type!=='menuStyles');
                                   const targetId = visible[idx].id;
                                   const realIndex = currentPage.sections.findIndex(s => s.id === targetId);
                                   const newSection = createNewSectionOfType(type);
@@ -295,7 +356,7 @@ const App: React.FC = () => {
                                   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ ...siteData, pages: newPages }));
                                 }}
                                 onAddAfter={(type) => {
-                                  const visible = currentPage.sections.filter(s=>s.type!=='estilos');
+                                  const visible = currentPage.sections.filter(s=>s.type!=='estilos' && s.type!=='menuStyles');
                                   const targetId = visible[idx].id;
                                   const realIndex = currentPage.sections.findIndex(s => s.id === targetId);
                                   const newSection = createNewSectionOfType(type);
@@ -309,7 +370,7 @@ const App: React.FC = () => {
                                   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ ...siteData, pages: newPages }));
                                 }}
                                 onDuplicate={() => {
-                                  const visible = currentPage.sections.filter(s=>s.type!=='estilos');
+                                  const visible = currentPage.sections.filter(s=>s.type!=='estilos' && s.type!=='menuStyles');
                                   const targetId = visible[idx].id;
                                   const realIndex = currentPage.sections.findIndex(s => s.id === targetId);
                                   const clone = JSON.parse(JSON.stringify(currentPage.sections[realIndex]));

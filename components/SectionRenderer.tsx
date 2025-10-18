@@ -1,5 +1,5 @@
 import React from 'react';
-import { Section, ContactInfo, SectionType } from '../types';
+import { Section, ContactInfo, SectionType, HeaderMenuFooterStyles, Page, MenuItemStyle } from '../types';
 
 import HeroSlider from './HeroSlider';
 import Services from './Services';
@@ -27,14 +27,18 @@ interface SectionRendererProps {
   onAddAfter?: (type: SectionType) => void;
   onDuplicate?: () => void;
   onUpdateContactInfo?: (field: keyof ContactInfo, value: string) => void;
+  headerMenuFooterStyles?: HeaderMenuFooterStyles;
+  onUpdateHeaderMenuFooterStyles?: (patch: Partial<HeaderMenuFooterStyles>) => void;
+  pages?: Page[];
+  onUpdatePageMenuStyle?: (pageId: string, patch: Partial<MenuItemStyle>) => void;
 }
 
-const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo, editMode, compact, onMoveUp, onMoveDown, onDelete, onUpdateField, onAddBefore, onAddAfter, onDuplicate, onUpdateContactInfo }) => {
+const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo, editMode, compact, onMoveUp, onMoveDown, onDelete, onUpdateField, onAddBefore, onAddAfter, onDuplicate, onUpdateContactInfo, headerMenuFooterStyles, onUpdateHeaderMenuFooterStyles, pages, onUpdatePageMenuStyle }) => {
   const sectionProps = section.content;
   const [openEdit, setOpenEdit] = React.useState(false);
   const [openAddBefore, setOpenAddBefore] = React.useState(false);
   const [openAddAfter, setOpenAddAfter] = React.useState(false);
-  const TYPES: SectionType[] = ['hero','services','products','about','map','contact','text','image','html','logos','columns'];
+  const TYPES: SectionType[] = ['hero','services','products','about','map','contact','text','image','html','logos','columns','menuStyles'];
   
   const sanitizeHex = (val: string) => {
     if (!val) return '';
@@ -82,8 +86,11 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
             onChangeColumns={(cols) => onUpdateField && onUpdateField('columns', cols)}
           />
         );
-    case 'estilos':
-        return <EstilosSection section={sectionProps} editable={false} />;
+  case 'estilos':
+    return <EstilosSection section={sectionProps} editable={false} />;
+  case 'menuStyles':
+    // Sección invisible; no renderiza contenido, solo sirve para el panel de edición
+    return null;
     default:
       return (
         <div className="container mx-auto py-10 px-6">
@@ -136,6 +143,69 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
       {openEdit && onUpdateField && (
         <div className="absolute left-2 -top-10 bg-white border rounded shadow p-3 z-40 min-w-[240px]">
           {/* Panel de edición básica según tipo */}
+          {section.type === 'menuStyles' && (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente menú" defaultValue={headerMenuFooterStyles?.menuFont || ''} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ menuFont: e.target.value })} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color texto menú" defaultValue={headerMenuFooterStyles?.menuColor || '#000000'} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ menuColor: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" defaultChecked={!!headerMenuFooterStyles?.menuUnderline} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ menuUnderline: e.target.checked })} /> Subrayado siempre</label>
+                <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" defaultChecked={headerMenuFooterStyles?.menuHoverUnderline !== false} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ menuHoverUnderline: e.target.checked })} /> Subrayado al pasar</label>
+              </div>
+              {(headerMenuFooterStyles?.menuUnderline || headerMenuFooterStyles?.menuHoverUnderline) && (
+                <div className="grid grid-cols-3 gap-2 items-center">
+                  <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color subrayado" defaultValue={headerMenuFooterStyles?.menuUnderlineColor || headerMenuFooterStyles?.menuColor || '#000000'} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ menuUnderlineColor: e.target.value })} />
+                  <input type="number" min={1} max={6} className="border rounded px-2 py-1 text-xs" placeholder="Grosor (px)" defaultValue={headerMenuFooterStyles?.menuUnderlineThickness || 2} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ menuUnderlineThickness: Number(e.target.value) || 0 })} />
+                  <select className="border rounded px-2 py-1 text-xs" defaultValue={headerMenuFooterStyles?.menuUnderlineStyle || 'solid'} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ menuUnderlineStyle: e.target.value as any })}>
+                    <option value="solid">Sólido</option>
+                    <option value="dashed">Guiones</option>
+                    <option value="dotted">Punteado</option>
+                  </select>
+                </div>
+              )}
+              {/* Overrides por página */}
+              {pages && pages.length > 0 && (
+                <div className="mt-2 p-2 border-t">
+                  <div className="text-[11px] font-semibold mb-1">Overrides por página</div>
+                  <div className="space-y-2 max-h-56 overflow-auto pr-1">
+                    {pages.map(p => (
+                      <div key={p.id} className="grid grid-cols-6 gap-1 items-center border rounded p-1">
+                        <div className="col-span-6 text-[10px] font-medium truncate" title={p.name}>{p.name}</div>
+                        <input type="color" className="col-span-2 border rounded h-7" title="Color texto"
+                          defaultValue={p.menuStyle?.color || ''}
+                          onChange={e => onUpdatePageMenuStyle && onUpdatePageMenuStyle(p.id, { color: e.target.value })} />
+                        <label className="col-span-2 flex items-center gap-1 text-[10px]"><input type="checkbox" defaultChecked={!!p.menuStyle?.underline} onChange={e => onUpdatePageMenuStyle && onUpdatePageMenuStyle(p.id, { underline: e.target.checked })} />Underline</label>
+                        <label className="col-span-2 flex items-center gap-1 text-[10px]"><input type="checkbox" defaultChecked={p.menuStyle?.hoverUnderline !== false} onChange={e => onUpdatePageMenuStyle && onUpdatePageMenuStyle(p.id, { hoverUnderline: e.target.checked })} />Hover</label>
+                        <input type="color" className="col-span-2 border rounded h-7" title="Color subrayado"
+                          defaultValue={p.menuStyle?.underlineColor || ''}
+                          onChange={e => onUpdatePageMenuStyle && onUpdatePageMenuStyle(p.id, { underlineColor: e.target.value })} />
+                        <input type="number" min={1} max={6} className="col-span-2 border rounded px-1 py-0.5 text-[10px]" placeholder="Grosor (px)"
+                          defaultValue={p.menuStyle?.underlineThickness || 0}
+                          onChange={e => onUpdatePageMenuStyle && onUpdatePageMenuStyle(p.id, { underlineThickness: Number(e.target.value) || 0 })} />
+                        <select className="col-span-2 border rounded px-1 py-0.5 text-[10px]"
+                          defaultValue={p.menuStyle?.underlineStyle || 'solid'}
+                          onChange={e => onUpdatePageMenuStyle && onUpdatePageMenuStyle(p.id, { underlineStyle: e.target.value as any })}>
+                          <option value="solid">Sólido</option>
+                          <option value="dashed">Guiones</option>
+                          <option value="dotted">Punteado</option>
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente header" defaultValue={headerMenuFooterStyles?.headerFont || ''} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ headerFont: e.target.value })} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color título header" defaultValue={headerMenuFooterStyles?.headerColor || '#000000'} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ headerColor: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente footer" defaultValue={headerMenuFooterStyles?.footerFont || ''} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ footerFont: e.target.value })} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color título footer" defaultValue={headerMenuFooterStyles?.footerColor || '#000000'} onChange={e => onUpdateHeaderMenuFooterStyles && onUpdateHeaderMenuFooterStyles({ footerColor: e.target.value })} />
+              </div>
+              <p className="text-[10px] text-gray-500">Afecta al menú superior (desktop y móvil) y a títulos de header/footer.</p>
+            </div>
+          )}
           {section.type === 'text' && (
             <div className="space-y-2">
               <input className="w-full border rounded px-2 py-1 text-xs" placeholder="Título" defaultValue={(sectionProps as any).title || ''} onChange={e => onUpdateField('title', e.target.value)} />
@@ -156,9 +226,9 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
               <textarea className="w-full border rounded px-2 py-1 text-xs" placeholder="Descripción" defaultValue={(sectionProps as any).description || ''} onChange={e => onUpdateField('description', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente título" defaultValue={(sectionProps as any).titleFont || ''} onChange={e => onUpdateField('titleFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color título" defaultValue={(sectionProps as any).titleColor || ''} onChange={e => onUpdateField('titleColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color título" defaultValue={(sectionProps as any).titleColor || '#000000'} onChange={e => onUpdateField('titleColor', e.target.value)} />
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente texto" defaultValue={(sectionProps as any).textFont || ''} onChange={e => onUpdateField('textFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color texto" defaultValue={(sectionProps as any).textColor || ''} onChange={e => onUpdateField('textColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color texto" defaultValue={(sectionProps as any).textColor || '#000000'} onChange={e => onUpdateField('textColor', e.target.value)} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" defaultChecked={(sectionProps as any).showTitle !== false} onChange={e => onUpdateField('showTitle', e.target.checked)} /> Mostrar título</label>
@@ -174,9 +244,9 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
               <textarea className="w-full border rounded px-2 py-1 text-xs" placeholder="Contenido" defaultValue={(sectionProps as any).content || ''} onChange={e => onUpdateField('content', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente título" defaultValue={(sectionProps as any).titleFont || ''} onChange={e => onUpdateField('titleFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color título" defaultValue={(sectionProps as any).titleColor || ''} onChange={e => onUpdateField('titleColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color título" defaultValue={(sectionProps as any).titleColor || '#000000'} onChange={e => onUpdateField('titleColor', e.target.value)} />
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente texto" defaultValue={(sectionProps as any).textFont || ''} onChange={e => onUpdateField('textFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color texto" defaultValue={(sectionProps as any).textColor || ''} onChange={e => onUpdateField('textColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color texto" defaultValue={(sectionProps as any).textColor || '#000000'} onChange={e => onUpdateField('textColor', e.target.value)} />
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" defaultChecked={(sectionProps as any).showTitle !== false} onChange={e => onUpdateField('showTitle', e.target.checked)} /> Mostrar título</label>
@@ -190,9 +260,9 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
               <input className="w-full border rounded px-2 py-1 text-xs" placeholder="Título de sección" defaultValue={(sectionProps as any).title || ''} onChange={e => onUpdateField('title', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente título" defaultValue={(sectionProps as any).titleFont || ''} onChange={e => onUpdateField('titleFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color título" defaultValue={(sectionProps as any).titleColor || ''} onChange={e => onUpdateField('titleColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color título" defaultValue={(sectionProps as any).titleColor || '#000000'} onChange={e => onUpdateField('titleColor', e.target.value)} />
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente texto" defaultValue={(sectionProps as any).textFont || ''} onChange={e => onUpdateField('textFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color texto" defaultValue={(sectionProps as any).textColor || ''} onChange={e => onUpdateField('textColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color texto" defaultValue={(sectionProps as any).textColor || '#000000'} onChange={e => onUpdateField('textColor', e.target.value)} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" defaultChecked={(sectionProps as any).showTitle !== false} onChange={e => onUpdateField('showTitle', e.target.checked)} /> Mostrar título</label>
@@ -205,7 +275,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
               <input className="w-full border rounded px-2 py-1 text-xs" placeholder="Título de sección" defaultValue={(sectionProps as any).title || ''} onChange={e => onUpdateField('title', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente título" defaultValue={(sectionProps as any).titleFont || ''} onChange={e => onUpdateField('titleFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color título" defaultValue={(sectionProps as any).titleColor || ''} onChange={e => onUpdateField('titleColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color título" defaultValue={(sectionProps as any).titleColor || '#000000'} onChange={e => onUpdateField('titleColor', e.target.value)} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" defaultChecked={(sectionProps as any).showTitle !== false} onChange={e => onUpdateField('showTitle', e.target.checked)} /> Mostrar título</label>
@@ -218,7 +288,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
               <input className="w-full border rounded px-2 py-1 text-xs" placeholder="Título de sección" defaultValue={(sectionProps as any).title || ''} onChange={e => onUpdateField('title', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente título" defaultValue={(sectionProps as any).titleFont || ''} onChange={e => onUpdateField('titleFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color título" defaultValue={(sectionProps as any).titleColor || ''} onChange={e => onUpdateField('titleColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color título" defaultValue={(sectionProps as any).titleColor || '#000000'} onChange={e => onUpdateField('titleColor', e.target.value)} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" defaultChecked={(sectionProps as any).showTitle !== false} onChange={e => onUpdateField('showTitle', e.target.checked)} /> Mostrar título</label>
@@ -316,7 +386,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
               <textarea className="w-full border rounded px-2 py-1 text-xs" placeholder="Contenido HTML" defaultValue={(sectionProps as any).htmlContent || ''} onChange={e => onUpdateField('htmlContent', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente texto" defaultValue={(sectionProps as any).textFont || ''} onChange={e => onUpdateField('textFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color texto" defaultValue={(sectionProps as any).textColor || ''} onChange={e => onUpdateField('textColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color texto" defaultValue={(sectionProps as any).textColor || '#000000'} onChange={e => onUpdateField('textColor', e.target.value)} />
               </div>
             </div>
           )}
@@ -326,7 +396,7 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({ section, contactInfo,
               <textarea className="w-full border rounded px-2 py-1 text-xs" placeholder="URL de Google Maps Embed" defaultValue={(sectionProps as any).embedUrl || ''} onChange={e => onUpdateField('embedUrl', e.target.value)} />
               <div className="grid grid-cols-2 gap-2">
                 <input className="border rounded px-2 py-1 text-xs" placeholder="Fuente título" defaultValue={(sectionProps as any).titleFont || ''} onChange={e => onUpdateField('titleFont', e.target.value)} />
-                <input className="border rounded px-2 py-1 text-xs" placeholder="# Color título" defaultValue={(sectionProps as any).titleColor || ''} onChange={e => onUpdateField('titleColor', sanitizeHex(e.target.value))} />
+                <input type="color" className="border rounded px-2 py-1 text-xs h-8" title="Color título" defaultValue={(sectionProps as any).titleColor || '#000000'} onChange={e => onUpdateField('titleColor', e.target.value)} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" defaultChecked={(sectionProps as any).showTitle !== false} onChange={e => onUpdateField('showTitle', e.target.checked)} /> Mostrar título</label>

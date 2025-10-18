@@ -1,31 +1,75 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ImageSection as ImageSectionType } from '../types';
 
 type Props = ImageSectionType & { editMode?: boolean; onUpdateField?: (field: string, value: any) => void; titleFont?: string; titleColor?: string; textFont?: string; textColor?: string; compact?: boolean };
 
-const ImageSection: React.FC<Props> = ({ title, images, displayMode, editMode, onUpdateField, titleFont, titleColor, showTitle = true, showUnderline = true, compact }) => {
+const ImageSection: React.FC<Props> = ({ title, images, displayMode, sliderColumns = 3, sliderAutoplay = false, sliderSpeedMs = 5000, sliderStep = '1', sliderPauseOnHover = true, sliderResponsive = true, editMode, onUpdateField, titleFont, titleColor, showTitle = true, showUnderline = true, compact }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
+  const stepSize = sliderStep === 'columns' ? Math.max(1, Math.min(images.length, sliderColumns)) : 1;
   const goToNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+    if (images.length === 0) return;
+    setCurrentIndex((prevIndex) => (prevIndex + stepSize) % images.length);
   };
 
   const goToPrevious = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
+    if (images.length === 0) return;
+    setCurrentIndex((prevIndex) => (prevIndex - stepSize + images.length) % images.length);
   };
 
+  // Autoplay con pausa opcional en hover
+  useEffect(() => {
+    if (displayMode !== 'slider' || !sliderAutoplay || images.length <= 1) return;
+    if (sliderPauseOnHover && isHovered) return; // pausar mientras se mantiene hover
+    const interval = setInterval(() => {
+      goToNext();
+    }, Math.max(1000, sliderSpeedMs || 5000));
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayMode, sliderAutoplay, sliderSpeedMs, images.length, stepSize, isHovered, sliderPauseOnHover]);
+
+
+  // Columnas efectivas: si responsive, reducir según ancho
+  const effectiveCols = useMemo(() => {
+    const base = Math.max(1, Math.min(6, Math.floor(sliderColumns || 1)));
+    if (!sliderResponsive) return base;
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    if (w < 640) return Math.min(1, base);
+    if (w < 768) return Math.min(2, base);
+    if (w < 1024) return Math.min(3, base);
+    return base;
+  }, [sliderColumns, sliderResponsive]);
+  const visibleItems = useMemo(() => {
+    if (images.length === 0) return [] as typeof images;
+    const items: typeof images = [] as any;
+    for (let i = 0; i < Math.min(effectiveCols, images.length); i++) {
+      items.push(images[(currentIndex + i) % images.length]);
+    }
+    return items;
+  }, [images, currentIndex, effectiveCols]);
 
   const renderSlider = () => (
-    <div className="relative w-full max-w-4xl mx-auto">
+    <div className="relative w-full max-w-6xl mx-auto" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
       {images.length > 0 && (
-        <div className="relative h-96 overflow-hidden rounded-lg">
-            <img src={images[currentIndex].url} alt={`Slide ${currentIndex}`} className="w-full h-full object-cover" />
+        <div className="relative overflow-hidden rounded-lg">
+          <div className="grid gap-4"
+               style={{
+                 gridTemplateColumns: `repeat(${effectiveCols}, minmax(0, 1fr))`,
+               }}
+          >
+            {visibleItems.map((img, idx) => (
+              <div key={img.id + '-' + idx} className="h-72 md:h-80 lg:h-96 overflow-hidden rounded-lg">
+                <img src={img.url} alt={`Slide ${idx}`} className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
-      {images.length > 1 && (
+      {images.length > effectiveCols && (
         <>
-            <button onClick={goToPrevious} className="absolute top-1/2 left-2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white">&lt;</button>
-            <button onClick={goToNext} className="absolute top-1/2 right-2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white">&gt;</button>
+          <button onClick={goToPrevious} className="absolute top-1/2 left-2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white">&lt;</button>
+          <button onClick={goToNext} className="absolute top-1/2 right-2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white">&gt;</button>
         </>
       )}
     </div>

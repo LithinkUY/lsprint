@@ -4,6 +4,40 @@ import { v4 as uuidv4 } from 'uuid';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import EstilosSection from './EstilosSection';
 
+// Biblioteca mínima de iconos sociales (SVG inline, usa currentColor)
+const SOCIAL_ICON_LIBRARY: { key: string; label: string; svg: string; defaultUrl?: string }[] = [
+  {
+    key: 'facebook',
+    label: 'Facebook',
+    svg: '<svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/></svg>',
+    defaultUrl: 'https://facebook.com/',
+  },
+  {
+    key: 'instagram',
+    label: 'Instagram',
+    svg: '<svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.024.06 1.378.06 3.808s-.012 2.784-.06 3.808c-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.024.048-1.378.06-3.808.06s-2.784-.012-3.808-.06c-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.048-1.024-.06-1.378-.06-3.808s.012-2.784.06-3.808c.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zM12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5zM12 14a2 2 0 110-4 2 2 0 010 4zm6.406-7.125a.75.75 0 000-1.5.75.75 0 000 1.5z" clip-rule="evenodd"/></svg>',
+    defaultUrl: 'https://instagram.com/',
+  },
+  {
+    key: 'youtube',
+    label: 'YouTube',
+    svg: '<svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.005 3.005 0 00-2.115-2.128C19.688 3.5 12 3.5 12 3.5s-7.688 0-9.383.558A3.005 3.005 0 00.502 6.186 31.19 31.19 0 000 12a31.19 31.19 0 00.502 5.814 3.005 3.005 0 002.115 2.128C4.312 20.5 12 20.5 12 20.5s7.688 0 9.383-.558a3.005 3.005 0 002.115-2.128A31.19 31.19 0 0024 12a31.19 31.19 0 00-.502-5.814zM9.75 15.5v-7l6 3.5-6 3.5z"/></svg>',
+    defaultUrl: 'https://youtube.com/',
+  },
+  {
+    key: 'whatsapp',
+    label: 'WhatsApp',
+    svg: '<svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.52 3.48A11.93 11.93 0 0012 0C5.373 0 0 5.373 0 12c0 2.106.55 4.083 1.515 5.79L0 24l6.36-1.482A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12 0-3.193-1.247-6.102-3.48-8.52zM12 21.75c-1.92 0-3.7-.56-5.19-1.52l-.37-.23-3.69.86.79-3.6-.24-.38A9.76 9.76 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75zm5.02-6.3c-.275-.137-1.63-.804-1.88-.896-.252-.093-.435-.137-.617.137-.182.275-.708.896-.867 1.078-.16.182-.318.205-.593.068-.275-.137-1.16-.427-2.21-1.36-.817-.728-1.37-1.627-1.53-1.902-.16-.275-.017-.424.12-.561.124-.124.275-.318.412-.48.137-.16.182-.274.274-.457.091-.182.046-.342-.023-.48-.068-.137-.617-1.49-.845-2.04-.223-.54-.45-.466-.617-.475l-.527-.01c-.183 0-.48.068-.733.343-.252.274-.962.94-.962 2.29 0 1.35.986 2.653 1.124 2.836.137.182 1.938 2.958 4.697 4.147.657.283 1.17.452 1.57.579.66.21 1.26.181 1.734.11.529-.078 1.63-.665 1.862-1.308.229-.64.229-1.19.16-1.308-.068-.114-.252-.183-.527-.32z"/></svg>',
+    defaultUrl: 'https://wa.me/',
+  },
+  {
+    key: 'linkedin',
+    label: 'LinkedIn',
+    svg: '<svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM.5 8h4V24h-4V8zm7.5 0h3.8v2.2h.05c.53-1 1.83-2.2 3.77-2.2 4.03 0 4.78 2.65 4.78 6.1V24h-4V15.5c0-2.03-.04-4.64-2.83-4.64-2.84 0-3.27 2.22-3.27 4.5V24h-4V8z"/></svg>',
+    defaultUrl: 'https://linkedin.com/',
+  },
+];
+
 // Props Interface
 interface AdminPanelProps {
   initialData: SiteData;
@@ -65,9 +99,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
   const [activeTab, setActiveTab] = useState('páginas');
   const [selectedPageId, setSelectedPageId] = useState<string | null>(initialData.pages[0]?.id || null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [deployNotice, setDeployNotice] = useState(false);
+  const BUILD_KEY = 'app-build-id';
 
   useEffect(() => { setDraftData(JSON.parse(JSON.stringify(initialData))); }, [initialData]);
   useEffect(() => { setHasChanges(JSON.stringify(draftData) !== JSON.stringify(initialData)); }, [draftData, initialData]);
+
+  // Detectar despliegue nuevo y sugerir recargar configuración (sin cerrar sesión)
+  useEffect(() => {
+    try {
+      const currentBuild = (globalThis as any).__APP_BUILD__ || 'dev';
+      const storedBuild = localStorage.getItem(BUILD_KEY);
+      if (storedBuild && storedBuild !== currentBuild) {
+        setDeployNotice(true);
+      }
+      if (!storedBuild) {
+        localStorage.setItem(BUILD_KEY, String(currentBuild));
+      }
+    } catch {}
+  }, []);
 
   const handleSave = () => {
     // Clonar y sanear número de WhatsApp
@@ -95,7 +145,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
     });
   };
 
-  const handleIdentityChange = (field: keyof SiteIdentity, value: string) => handleUpdate(d => d.siteIdentity, field, value);
+  const handleIdentityChange = (field: keyof SiteIdentity, value: any) => handleUpdate(d => d.siteIdentity, field, value);
   const handleGlobalStylesChange = (field: keyof GlobalStyles, value: string) => handleUpdate(d => d.globalStyles, field, value);
   const handleHeaderStylesChange = (field: keyof HeaderFooterStyles, value: string) => handleUpdate(d => d.headerStyles, field, value);
   const handleFooterStylesChange = (field: keyof HeaderFooterStyles, value: string) => handleUpdate(d => d.footerStyles, field, value);
@@ -598,22 +648,79 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
               <option value="grid">Grilla</option>
               <option value="slider">Slider</option>
             </FormField>
+            {imageContent.displayMode === 'slider' && (
+              <div className="mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Columnas visibles (slider)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={6}
+                  value={imageContent.sliderColumns ?? 3}
+                  onChange={e => updateField('sliderColumns', Math.max(1, Math.min(6, Number(e.target.value) || 1)))}
+                  className="w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+                <div className="mt-3 flex flex-wrap gap-4 items-end">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Avance automático</label>
+                    <input
+                      type="checkbox"
+                      checked={!!imageContent.sliderAutoplay}
+                      onChange={e => updateField('sliderAutoplay', e.target.checked)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Velocidad (ms)</label>
+                    <input
+                      type="number"
+                      min={1000}
+                      step={500}
+                      value={imageContent.sliderSpeedMs ?? 5000}
+                      onChange={e => updateField('sliderSpeedMs', Math.max(1000, Number(e.target.value) || 5000))}
+                      className="w-36 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Paso</label>
+                    <select
+                      className="px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white"
+                      value={imageContent.sliderStep || '1'}
+                      onChange={e => updateField('sliderStep', e.target.value as any)}
+                    >
+                      <option value="1">De a 1 imagen</option>
+                      <option value="columns">De a N columnas</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <input id="img-slider-pause" type="checkbox" checked={imageContent.sliderPauseOnHover ?? true} onChange={e => updateField('sliderPauseOnHover', e.target.checked)} />
+                    <label htmlFor="img-slider-pause" className="text-sm">Pausar al pasar el mouse</label>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <input id="img-slider-responsive" type="checkbox" checked={imageContent.sliderResponsive ?? true} onChange={e => updateField('sliderResponsive', e.target.checked)} />
+                    <label htmlFor="img-slider-responsive" className="text-sm">Columnas responsivas</label>
+                  </div>
+                </div>
+              </div>
+            )}
             {imageContent.images.map((image, i) => (
               <CollapsibleCard key={image.id} title={`Imagen ${i + 1}`} onDelete={() => updateList('images', imageContent.images.filter(img => img.id !== image.id))}>
                 <FormField id={`img-u-${image.id}`} label="URL de la Imagen" value={image.url} onChange={createListItemChangeHandler<ImageItem, 'url'>('image', i, 'url')} />
                 <div className="mb-2">
-                  <input type="file" accept="image/*" onChange={async (e) => {
+                  <input type="file" accept="image/*" multiple onChange={async (e) => {
                     const file = e.target.files?.[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      if (typeof reader.result === 'string') {
-                        const newImages = [...imageContent.images];
-                        newImages[i].url = reader.result;
-                        updateList('images', newImages);
-                      }
-                    };
-                    reader.readAsDataURL(file);
+                    const files = e.target.files;
+                    if (!files || files.length === 0) return;
+                    // Si hay múltiples archivos, agregamos nuevos items por cada uno; el actual se reemplaza por el primero
+                    const toDataUrl = (f: File) => new Promise<string>((resolve) => { const r = new FileReader(); r.onloadend = () => resolve(String(r.result)); r.readAsDataURL(f); });
+                    const dataUrls: string[] = [];
+                    for (let idx = 0; idx < files.length; idx++) { dataUrls.push(await toDataUrl(files[idx]!)); }
+                    const newImages = [...imageContent.images];
+                    // Reemplaza la actual por la primera
+                    newImages[i].url = dataUrls[0];
+                    // Agrega el resto como nuevas imágenes
+                    for (let k = 1; k < dataUrls.length; k++) {
+                      newImages.push({ id: uuidv4(), url: dataUrls[k]! });
+                    }
+                    updateList('images', newImages);
                   }} />
                   {image.url && image.url.startsWith('data:image') && (
                     <img src={image.url} alt="preview" className="mt-1 h-16 object-contain" />
@@ -670,6 +777,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
             </button>
           ))}
           <button
+            onClick={() => {
+              if (window.confirm('Esto borrará los datos locales y recargará el panel para traer la configuración más reciente. Tus cambios sin guardar se perderán. ¿Continuar?')) {
+                try { localStorage.removeItem('dynamic-site-data'); } catch {}
+                // Mantener la sesión de admin. Solo recargar la página.
+                window.location.reload();
+              }
+            }}
+            className="w-full mt-2 py-2 px-4 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+          >
+            Recargar configuración
+          </button>
+          <button
             onClick={onClose}
             className="w-full mt-4 py-2 px-4 bg-red-500 text-white rounded hover:bg-red-600"
           >
@@ -679,6 +798,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
       </aside>
       {/* Contenido principal */}
       <main className="flex-1 p-6 overflow-y-auto">
+        {deployNotice && (
+          <div className="mb-4 p-3 rounded border border-yellow-300 bg-yellow-50 text-yellow-900 flex items-center justify-between">
+            <div className="text-sm">Hay una nueva versión publicada. Puedes recargar la configuración para ver los cambios más recientes.</div>
+            <div className="flex gap-2">
+              <button
+                className="px-3 py-1 text-sm rounded bg-yellow-600 text-white hover:bg-yellow-700"
+                onClick={() => {
+                  try { localStorage.removeItem('dynamic-site-data'); } catch {}
+                  try {
+                    const currentBuild = (globalThis as any).__APP_BUILD__ || 'dev';
+                    localStorage.setItem(BUILD_KEY, String(currentBuild));
+                  } catch {}
+                  window.location.reload();
+                }}
+              >
+                Actualizar
+              </button>
+              <button
+                className="px-3 py-1 text-sm rounded border border-yellow-500 text-yellow-900 hover:bg-yellow-100"
+                onClick={() => setDeployNotice(false)}
+              >
+                Seguir editando
+              </button>
+            </div>
+          </div>
+        )}
         <>
           {activeTab === 'estilos' && (
             <>{/* ...editor de estilos, iconos sociales header, datos contacto... */}</>
@@ -742,6 +887,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
             <FormField id="logo-p1" label="Logo Texto Parte 1" value={draftData.siteIdentity.logoTextPart1} onChange={e => handleIdentityChange('logoTextPart1', e.target.value)} />
             <FormField id="logo-p2" label="Logo Texto Parte 2" value={draftData.siteIdentity.logoTextPart2} onChange={e => handleIdentityChange('logoTextPart2', e.target.value)} />
             <FormField id="logo-url" label="URL del Logo (opcional)" value={draftData.siteIdentity.logoImageUrl} onChange={e => handleIdentityChange('logoImageUrl', e.target.value)} />
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Alto del logo en el header (px)</label>
+              <div className="flex items-center gap-3">
+                <input type="range" min={16} max={120} value={draftData.siteIdentity.logoHeightPx ?? 40} onChange={e => handleIdentityChange('logoHeightPx', Number(e.target.value))} />
+                <input type="number" min={16} max={200} className="w-24 px-2 py-1 border rounded" value={draftData.siteIdentity.logoHeightPx ?? 40} onChange={e => handleIdentityChange('logoHeightPx', Math.max(16, Math.min(200, Number(e.target.value) || 40)))} />
+                <span className="text-sm text-gray-500">px</span>
+              </div>
+              {draftData.siteIdentity.logoImageUrl && (
+                <div className="mt-2">
+                  <img src={draftData.siteIdentity.logoImageUrl} alt="preview" style={{ height: `${draftData.siteIdentity.logoHeightPx ?? 40}px` }} className="w-auto object-contain border rounded p-1 bg-white" />
+                </div>
+              )}
+            </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Subir Logo (imagen, base64)</label>
               <input
@@ -831,6 +989,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
                 <h4 className="font-semibold mb-2">Iconos Sociales Header</h4>
                 {(draftData.socialIconsHeader || []).map((icon, idx) => (
                   <div key={icon.id} className="flex gap-2 mb-2 items-center">
+                    <div className="text-[10px] text-gray-500">Icono</div>
+                    <select
+                      className="px-2 py-1 border rounded text-sm bg-white"
+                      value={(() => {
+                        const found = SOCIAL_ICON_LIBRARY.find(i => i.svg === icon.iconSvg);
+                        return found?.key || '';
+                      })()}
+                      onChange={e => {
+                        const key = e.target.value;
+                        const lib = SOCIAL_ICON_LIBRARY.find(i => i.key === key);
+                        const newIcons = [...(draftData.socialIconsHeader || [])];
+                        if (lib) {
+                          newIcons[idx].name = lib.label;
+                          newIcons[idx].iconSvg = lib.svg;
+                          if (!newIcons[idx].url && lib.defaultUrl) newIcons[idx].url = lib.defaultUrl;
+                        }
+                        setDraftData(d => ({ ...d, socialIconsHeader: newIcons }));
+                      }}
+                    >
+                      <option value="">Elegir…</option>
+                      {SOCIAL_ICON_LIBRARY.map(opt => (
+                        <option key={opt.key} value={opt.key}>{opt.label}</option>
+                      ))}
+                    </select>
                     <FormField id={`social-header-name-${icon.id}`} label="" value={icon.name} onChange={e => {
                       const newIcons = [...(draftData.socialIconsHeader || [])];
                       newIcons[idx].name = e.target.value;
@@ -856,6 +1038,36 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
               <h3 className="text-lg font-semibold mb-3">Estilos Menú</h3>
               <FormField id="menu-font" label="Fuente Menú" value={draftData.headerMenuFooterStyles?.menuFont || ''} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, menuFont: e.target.value } }))} />
               <FormField id="menu-color" label="Color Texto Menú" value={draftData.headerMenuFooterStyles?.menuColor || ''} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, menuColor: e.target.value } }))} />
+              <div className="mt-3 flex flex-wrap gap-4 items-center">
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={!!draftData.headerMenuFooterStyles?.menuUnderline} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, menuUnderline: e.target.checked } }))} />
+                  Subrayado siempre
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={(draftData.headerMenuFooterStyles?.menuHoverUnderline ?? true)} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, menuHoverUnderline: e.target.checked } }))} />
+                  Subrayado al pasar
+                </label>
+                {(draftData.headerMenuFooterStyles?.menuUnderline || (draftData.headerMenuFooterStyles?.menuHoverUnderline ?? true)) && (
+                  <div className="flex flex-wrap gap-3 items-end">
+                    <div>
+                      <label className="block text-[12px] text-gray-600 mb-1">Color subrayado</label>
+                      <input type="color" value={draftData.headerMenuFooterStyles?.menuUnderlineColor || draftData.headerMenuFooterStyles?.menuColor || '#000000'} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, menuUnderlineColor: e.target.value } }))} />
+                    </div>
+                    <div>
+                      <label className="block text-[12px] text-gray-600 mb-1">Grosor (px)</label>
+                      <input type="number" min={1} max={8} value={draftData.headerMenuFooterStyles?.menuUnderlineThickness ?? 4} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, menuUnderlineThickness: Math.max(1, Math.min(8, Number(e.target.value) || 4)) } }))} className="w-24 px-2 py-1 border rounded" />
+                    </div>
+                    <div>
+                      <label className="block text-[12px] text-gray-600 mb-1">Estilo</label>
+                      <select value={draftData.headerMenuFooterStyles?.menuUnderlineStyle || 'solid'} onChange={e => setDraftData(d => ({ ...d, headerMenuFooterStyles: { ...d.headerMenuFooterStyles, menuUnderlineStyle: e.target.value as any } }))} className="px-2 py-1 border rounded bg-white">
+                        <option value="solid">Sólido</option>
+                        <option value="dashed">Guiones</option>
+                        <option value="dotted">Punteado</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="mt-4">
                 <h4 className="font-semibold mb-2">Ítems del Menú</h4>
                 {(draftData.menuItems || []).map((item, idx) => (
@@ -885,6 +1097,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
                 <h4 className="font-semibold mb-2">Iconos Sociales</h4>
                 {(draftData.socialIcons || []).map((icon, idx) => (
                   <div key={icon.id} className="flex gap-2 mb-2 items-center">
+                    <div className="text-[10px] text-gray-500">Icono</div>
+                    <select
+                      className="px-2 py-1 border rounded text-sm bg-white"
+                      value={(() => {
+                        const found = SOCIAL_ICON_LIBRARY.find(i => i.svg === icon.iconSvg);
+                        return found?.key || '';
+                      })()}
+                      onChange={e => {
+                        const key = e.target.value;
+                        const lib = SOCIAL_ICON_LIBRARY.find(i => i.key === key);
+                        const newIcons = [...(draftData.socialIcons || [])];
+                        if (lib) {
+                          newIcons[idx].name = lib.label;
+                          newIcons[idx].iconSvg = lib.svg;
+                          if (!newIcons[idx].url && lib.defaultUrl) newIcons[idx].url = lib.defaultUrl;
+                        }
+                        setDraftData(d => ({ ...d, socialIcons: newIcons }));
+                      }}
+                    >
+                      <option value="">Elegir…</option>
+                      {SOCIAL_ICON_LIBRARY.map(opt => (
+                        <option key={opt.key} value={opt.key}>{opt.label}</option>
+                      ))}
+                    </select>
                     <FormField id={`social-name-${icon.id}`} label="" value={icon.name} onChange={e => {
                       const newIcons = [...(draftData.socialIcons || [])];
                       newIcons[idx].name = e.target.value;
@@ -915,6 +1151,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ initialData, setSiteData
                 <h4 className="font-semibold mb-2">Iconos Sociales Contacto</h4>
                 {(draftData.contactInfo?.socialIcons || []).map((icon, idx) => (
                   <div key={icon.id} className="flex gap-2 mb-2 items-center">
+                    <div className="text-[10px] text-gray-500">Icono</div>
+                    <select
+                      className="px-2 py-1 border rounded text-sm bg-white"
+                      value={(() => {
+                        const found = SOCIAL_ICON_LIBRARY.find(i => i.svg === icon.iconSvg);
+                        return found?.key || '';
+                      })()}
+                      onChange={e => {
+                        const key = e.target.value;
+                        const lib = SOCIAL_ICON_LIBRARY.find(i => i.key === key);
+                        const newIcons = [...(draftData.contactInfo?.socialIcons || [])];
+                        if (lib) {
+                          newIcons[idx].name = lib.label;
+                          newIcons[idx].iconSvg = lib.svg;
+                          if (!newIcons[idx].url && lib.defaultUrl) newIcons[idx].url = lib.defaultUrl;
+                        }
+                        setDraftData(d => ({ ...d, contactInfo: { ...d.contactInfo, socialIcons: newIcons } }));
+                      }}
+                    >
+                      <option value="">Elegir…</option>
+                      {SOCIAL_ICON_LIBRARY.map(opt => (
+                        <option key={opt.key} value={opt.key}>{opt.label}</option>
+                      ))}
+                    </select>
                     <FormField id={`contact-social-name-${icon.id}`} label="" value={icon.name} onChange={e => {
                       const newIcons = [...(draftData.contactInfo?.socialIcons || [])];
                       newIcons[idx].name = e.target.value;
